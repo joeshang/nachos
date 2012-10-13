@@ -82,6 +82,7 @@ class Thread {
 
   public:
     Thread(char* debugName);		// initialize a Thread 
+	Thread(char* debugName, unsigned int userIdentifier);
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
 					// must not be running when delete 
@@ -100,6 +101,8 @@ class Thread {
 						// overflowed its stack
     void setStatus(ThreadStatus st) { status = st; }
     char* getName() { return (name); }
+	unsigned int getUserID() { return (userID); }
+	unsigned int getThreadID() { return (threadID); }
     void Print() { printf("%s, ", name); }
 
   private:
@@ -110,7 +113,10 @@ class Thread {
 					// (If NULL, don't deallocate stack)
     ThreadStatus status;		// ready, running or blocked
     char* name;
+	unsigned int userID;
+	unsigned int threadID;
 
+	void initThread(char* debugName, unsigned int userIdentifier);
     void StackAllocate(VoidFunctionPtr func, int arg);
     					// Allocate a stack for thread.
 					// Used internally by Fork()

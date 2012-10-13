@@ -13,7 +13,7 @@
 #include "system.h"
 
 // testnum is set in main.cc
-int testnum = 1;
+int testnum = 2;
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -53,6 +53,43 @@ ThreadTest1()
 }
 
 //----------------------------------------------------------------------
+// ThreadExercise1Test
+//	Print threadID and userID of current thread
+//----------------------------------------------------------------------
+
+void
+PrintThreadInfo(int arg)
+{
+	printf("--> I'm thread %u which created by user %u\n",
+			currentThread->getThreadID(),
+			currentThread->getUserID());
+
+	currentThread->Yield();
+}
+
+//----------------------------------------------------------------------
+// ThreadExercise1Test
+//	Set up three threads with UserID, every thread call PrintThreadInfo.
+//----------------------------------------------------------------------
+
+void
+ThreadExercise1Test()
+{
+	DEBUG('t', "Enter Thread Exercise 1 Test");
+
+	Thread* t1 = new Thread("thread 1", 10);
+	t1->Fork(PrintThreadInfo, 1);
+	
+	Thread* t2 = new Thread("thread 2", 20);
+	t2->Fork(PrintThreadInfo, 1);
+
+	Thread* t3 = new Thread("thread 3", 30);
+	t3->Fork(PrintThreadInfo, 1);
+
+	PrintThreadInfo(0);
+}
+
+//----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
 //----------------------------------------------------------------------
@@ -63,6 +100,9 @@ ThreadTest()
     switch (testnum) {
     case 1:
 	ThreadTest1();
+	break;
+	case 2:
+	ThreadExercise1Test();
 	break;
     default:
 	printf("No test specified.\n");

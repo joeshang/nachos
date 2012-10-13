@@ -34,6 +34,34 @@
 
 Thread::Thread(char* threadName)
 {
+	initThread(threadName, 0);	// default userIdentifier is 0.
+}
+
+//----------------------------------------------------------------------
+// Thread::Thread
+//	Another initialize method with additional argument userIdentifier.
+//
+//	"threadName" is an arbitrary string, useful for debugging.
+//	"userIdentifier" is an unsigned integer, useful for debugging.
+//----------------------------------------------------------------------
+Thread::Thread(char* threadName, unsigned int userIdentifier)
+{
+	initThread(threadName, userIdentifier);
+}
+
+//----------------------------------------------------------------------
+// Thread::initThread
+//	Common operation for all construct functions listed above.
+//
+//	"threadName" is an arbitrary string, useful for debugging.
+//	"userIdentifier" is an unsigned integer, useful for debugging.
+//----------------------------------------------------------------------
+void Thread::initThread(char* threadName, unsigned int userIdentifier)
+{
+	static unsigned int threadIdentifier = 0;
+	threadID = threadIdentifier++;
+
+	userID = userIdentifier;
     name = threadName;
     stackTop = NULL;
     stack = NULL;
