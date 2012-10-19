@@ -35,6 +35,15 @@ SimpleThread(int which)
     }
 }
 
+void
+JustYield(int which)
+{
+	printf("Current running thread is %s\n", currentThread->getName());
+	threadManager->listThreadStatus();
+	currentThread->Yield();
+	threadManager->listThreadStatus();
+}
+
 //----------------------------------------------------------------------
 // ThreadTest1
 // 	Set up a ping-pong between two threads, by forking a thread 
@@ -42,51 +51,42 @@ SimpleThread(int which)
 //----------------------------------------------------------------------
 
 void
-ThreadTest1()
-{
-    DEBUG('t', "Entering ThreadTest1");
-
-    Thread *t = new Thread("forked thread");
-
-    t->Fork(SimpleThread, 1);
-    SimpleThread(0);
-}
-
-//----------------------------------------------------------------------
-// ThreadExercise1Test
-//	Print threadID and userID of current thread
-//----------------------------------------------------------------------
-
-void
-PrintThreadInfo(int arg)
-{
-	printf("--> I'm thread %u which created by user %u\n",
-			currentThread->getThreadID(),
-			currentThread->getUserID());
-
-	currentThread->Yield();
-}
-
-//----------------------------------------------------------------------
-// ThreadExercise1Test
-//	Set up three threads with UserID, every thread call PrintThreadInfo.
-//----------------------------------------------------------------------
-
-void
 ThreadExercise1Test()
 {
-	DEBUG('t', "Enter Thread Exercise 1 Test");
+    DEBUG('t', "Entering Thread Exercise Test 1");
 
-	Thread* t1 = new Thread("thread 1", 10);
-	t1->Fork(PrintThreadInfo, 1);
+	Thread* t1 = threadManager->createThread("thread 1", 10);
+	Thread* t2 = threadManager->createThread("thread 2", 20);
+	Thread* t3 = threadManager->createThread("thread 3", 30);
 	
-	Thread* t2 = new Thread("thread 2", 20);
-	t2->Fork(PrintThreadInfo, 1);
+	t1->Fork(SimpleThread, t1->getThreadID());
+	t2->Fork(SimpleThread, t1->getThreadID());
+	t3->Fork(SimpleThread, t3->getThreadID());
+}
 
-	Thread* t3 = new Thread("thread 3", 30);
-	t3->Fork(PrintThreadInfo, 1);
+//----------------------------------------------------------------------
+// ThreadExercise2Test
+//----------------------------------------------------------------------
+void 
+ThreadExercise2Test()
+{
+    DEBUG('t', "Entering Thread Exercise Test 2");
 
-	PrintThreadInfo(0);
+	printf("Create 3 threads:\n");
+
+	Thread* t1 = threadManager->createThread("thread 1", 10);
+	Thread* t2 = threadManager->createThread("thread 2", 20);
+	Thread* t3 = threadManager->createThread("thread 3", 30);
+
+	threadManager->listThreadStatus();
+
+	printf("After fork 3 threads:\n");
+
+	t1->Fork(JustYield, t1->getThreadID());
+	t2->Fork(JustYield, t1->getThreadID());
+	t3->Fork(JustYield, t3->getThreadID());
+
+	threadManager->listThreadStatus();
 }
 
 //----------------------------------------------------------------------
@@ -99,10 +99,13 @@ ThreadTest()
 {
     switch (testnum) {
     case 1:
-	ThreadTest1();
+	ThreadExercise1Test();
 	break;
 	case 2:
-	ThreadExercise1Test();
+	ThreadExercise2Test();
+	break;
+	case 3:
+//	ThreadExercise3Test();
 	break;
     default:
 	printf("No test specified.\n");

@@ -236,3 +236,57 @@ List::SortedRemove(int *keyPtr)
     return thing;
 }
 
+//----------------------------------------------------------------------
+// List::RemoveBySortedKey
+//      Remove the "item" of a sorted list by the "sortedKey".
+// 
+// Returns:
+//	Pointer to removed item, NULL if can't find the target on the list.
+//	Sets sortedKey to the priority value of the removed item
+//----------------------------------------------------------------------
+
+void*
+List::RemoveBySortedKey(int sortedKey)
+{
+	ListElement* target = NULL;
+	ListElement* cursor = NULL;
+	void* thing = NULL;
+
+	if (IsEmpty())
+	{
+		return NULL;
+	}
+
+    for (ListElement *ptr = first; ptr != NULL; ptr = ptr->next)
+	{
+		if (ptr->key == sortedKey)
+		{
+			target = ptr;
+			thing = ptr->item;
+			break;
+		}
+		cursor = ptr;
+	}
+
+	if (target)
+	{
+		if (target == first)
+		{
+			if (first == last)
+			{
+				first = NULL;
+				last = NULL;
+			}
+			else
+			{
+				first = target->next;
+			}
+		}
+		else
+		{
+			cursor->next = target->next;
+		}
+	}
+
+	return thing;
+}

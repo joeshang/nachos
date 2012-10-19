@@ -11,6 +11,7 @@
 #include "copyright.h"
 #include "utility.h"
 #include "thread.h"
+#include "threadmanager.h"
 #include "scheduler.h"
 #include "interrupt.h"
 #include "stats.h"
@@ -24,6 +25,7 @@ extern void Cleanup();				// Cleanup, called when
 
 extern Thread *currentThread;			// the thread holding the CPU
 extern Thread *threadToBeDestroyed;  		// the thread that just finished
+extern ThreadManager *threadManager;	// the manager of all threads
 extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
