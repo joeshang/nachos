@@ -72,11 +72,17 @@ ThreadExercise2Test()
 {
     DEBUG('t', "Entering Thread Exercise Test 2");
 
+	currentThread->setPriority(4);
+
 	printf("Create 3 threads:\n");
 
 	Thread* t1 = threadManager->createThread("thread 1", 10);
 	Thread* t2 = threadManager->createThread("thread 2", 20);
 	Thread* t3 = threadManager->createThread("thread 3", 30);
+
+	t1->setPriority(8);
+	t2->setPriority(0);
+	t3->setPriority(5);
 
 	threadManager->listThreadStatus();
 
@@ -87,6 +93,8 @@ ThreadExercise2Test()
 	t3->Fork(JustYield, t3->getThreadID());
 
 	threadManager->listThreadStatus();
+
+	JustYield(currentThread->getThreadID());
 }
 
 //----------------------------------------------------------------------

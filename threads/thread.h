@@ -103,6 +103,8 @@ class Thread {
     char* getName() { return (name); }
 	int getUserID() { return (userID); }
 	int getThreadID() { return (threadID); }
+	int getPriority() { return (priority); }
+	void setPriority(int prior) { priority = prior; }
     void Print() { printf("%s, ", name); }
 
   private:
@@ -115,6 +117,7 @@ class Thread {
     char* name;
 	int userID;
 	int threadID;
+	int priority;
 
     void StackAllocate(VoidFunctionPtr func, int arg);
     					// Allocate a stack for thread.
