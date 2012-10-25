@@ -33,8 +33,6 @@
 // only thing you would know is what the value used to be.  You don't
 // know what the value is now, because by the time you get the value
 // into a register, a context switch might have occurred,
-// and some other thread might have called P or V, so the true value might
-// now be different.
 
 class Semaphore {
   public:
@@ -79,6 +77,8 @@ class Lock {
 
   private:
     char* name;				// for debugging
+	Semaphore* semaphore;	// lock's implement by semaphore
+	Thread* lockHolder;		// thread whick hold the lock
     // plus some other stuff you'll need to define
 };
 
@@ -117,20 +117,21 @@ class Lock {
 class Condition {
   public:
     Condition(char* debugName);		// initialize condition to 
-					// "no one waiting"
+									// "no one waiting"
     ~Condition();			// deallocate the condition
     char* getName() { return (name); }
     
     void Wait(Lock *conditionLock); 	// these are the 3 operations on 
-					// condition variables; releasing the 
-					// lock and going to sleep are 
-					// *atomic* in Wait()
+										// condition variables; releasing the 
+										// lock and going to sleep are 
+										// *atomic* in Wait()
     void Signal(Lock *conditionLock);   // conditionLock must be held by
     void Broadcast(Lock *conditionLock);// the currentThread for all of 
-					// these operations
+										// these operations
 
   private:
     char* name;
+	List* waitingList;
     // plus some other stuff you'll need to define
 };
 #endif // SYNCH_H
