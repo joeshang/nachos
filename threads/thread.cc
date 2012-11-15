@@ -36,6 +36,7 @@ Thread::Thread(char* threadName, int uid, int pid)
 {
 	threadID = pid;
 	userID = uid;
+	priority = 0;
     name = threadName;
     stackTop = NULL;
     stack = NULL;

@@ -35,15 +35,6 @@ SimpleThread(int which)
     }
 }
 
-void
-JustYield(int which)
-{
-	printf("Current running thread is %s\n", currentThread->getName());
-	threadManager->listThreadStatus();
-	currentThread->Yield();
-	threadManager->listThreadStatus();
-}
-
 //----------------------------------------------------------------------
 // ThreadTest1
 // 	Set up a ping-pong between two threads, by forking a thread 
@@ -64,9 +55,21 @@ ThreadExercise1Test()
 	t3->Fork(SimpleThread, t3->getThreadID());
 }
 
+void
+JustYield(int which)
+{
+	printf("Current running thread is %s\n", currentThread->getName());
+	threadManager->listThreadStatus();
+	currentThread->Yield();
+	threadManager->listThreadStatus();
+}
+
 //----------------------------------------------------------------------
 // ThreadExercise2Test
+//	Set up 3 threads with different priority and then begin to schedule
+//	with TS command to show the effect of priority in thread scheduling.
 //----------------------------------------------------------------------
+
 void 
 ThreadExercise2Test()
 {
@@ -98,6 +101,24 @@ ThreadExercise2Test()
 }
 
 //----------------------------------------------------------------------
+// ThreadExercise3Test
+//	Simulate producer-customer problem by semaphore and condition value.
+//----------------------------------------------------------------------
+
+#define	USE_COND
+
+void
+ThreadExercise3Test()
+{
+#ifndef USE_COND
+	// 1. set up semaphore of buffer
+	// 2. fork producer and customer thread
+	// 3. begin to schedule
+#else
+#endif
+}
+
+//----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
 //----------------------------------------------------------------------
@@ -105,19 +126,23 @@ ThreadExercise2Test()
 void
 ThreadTest()
 {
-    switch (testnum) {
+    switch (testnum)
+   	{
+	// Exercise 1:Thread ID and user ID
     case 1:
-	ThreadExercise1Test();
-	break;
+		ThreadExercise1Test();
+		break;
+	// Exercise 2:Thread-Status command and priority scheduling
 	case 2:
-	ThreadExercise2Test();
-	break;
+		ThreadExercise2Test();
+		break;
+	// Exercise 3:Producer-Customer problem with semaphore and condition value
 	case 3:
-//	ThreadExercise3Test();
-	break;
+		ThreadExercise3Test();
+		break;
     default:
-	printf("No test specified.\n");
-	break;
+		printf("No test specified.\n");
+		break;
     }
 }
 
