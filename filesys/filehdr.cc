@@ -121,6 +121,45 @@ FileHeader::FileLength()
 }
 
 //----------------------------------------------------------------------
+// FileHeader::GetFileTyp
+//	Return the type of the file
+//----------------------------------------------------------------------
+
+FileType
+FileHeader::GetFileType() 	
+{
+	return fileType;
+}
+
+//----------------------------------------------------------------------
+// FileHeader::GetCreateTime
+//	Return the create time in TimeWrapper format
+//----------------------------------------------------------------------
+
+TimeWrapper
+FileHeader::GetCreateTime() 
+{
+	return createTime;
+}
+  
+//----------------------------------------------------------------------
+// FileHeader::GetCreateTime
+//	Return the access time in TimeWrapper format
+//----------------------------------------------------------------------
+
+TimeWrapper
+FileHeader::GetAccessTime() 
+{
+	return accessTime;
+}
+
+TimeWrapper
+FileHeader::GetModifyTime() // return the modify time in TimeWrapper format
+{
+	return modifyTime;
+}
+
+//----------------------------------------------------------------------
 // FileHeader::Print
 // 	Print the contents of the file header, and the contents of all
 //	the data blocks pointed to by the file header.
@@ -134,16 +173,25 @@ FileHeader::Print()
 
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
     for (i = 0; i < numSectors; i++)
-	printf("%d ", dataSectors[i]);
-    printf("\nFile contents:\n");
-    for (i = k = 0; i < numSectors; i++) {
-	synchDisk->ReadSector(dataSectors[i], data);
-        for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
-	    if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
-		printf("%c", data[j]);
-            else
-		printf("\\%x", (unsigned char)data[j]);
+	{
+		printf("%d ", dataSectors[i]);
 	}
+
+    printf("\nFile contents:\n");
+    for (i = k = 0; i < numSectors; i++)
+	{
+		synchDisk->ReadSector(dataSectors[i], data);
+        for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++)
+	   	{
+			if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
+			{
+				printf("%c", data[j]);
+			}
+			else
+			{
+				printf("\\%x", (unsigned char)data[j]);
+			}
+		}
         printf("\n"); 
     }
     delete [] data;

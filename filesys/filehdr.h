@@ -16,9 +16,19 @@
 
 #include "disk.h"
 #include "bitmap.h"
+#include "time.h"
 
 #define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
+
+typedef enum
+{
+	TYPE_FILE,
+	TYPE_DIR,
+	TYPE_UNKNOWN
+}FileType;
+
+typedef time_t TimeWrapper;
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -51,8 +61,11 @@ class FileHeader {
 					// to the disk sector containing
 					// the byte
 
-    int FileLength();			// Return the length of the file 
-					// in bytes
+    int FileLength();			// Return the length of the file in bytes
+	FileType GetFileType(); 	// Return the type of the file
+	TimeWrapper GetCreateTime(); // return the create time in TimeWrapper format
+	TimeWrapper GetAccessTime(); // return the access time in TimeWrapper format
+	TimeWrapper GetModifyTime(); // return the modify time in TimeWrapper format
 
     void Print();			// Print the contents of the file.
 
@@ -61,6 +74,10 @@ class FileHeader {
     int numSectors;			// Number of data sectors in the file
     int dataSectors[NumDirect];		// Disk sector numbers for each data 
 					// block in the file
+	FileType fileType;
+	TimeWrapper createTime;
+	TimeWrapper accessTime;
+	TimeWrapper modifyTime;
 };
 
 #endif // FILEHDR_H
