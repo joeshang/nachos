@@ -139,6 +139,8 @@ class Machine {
     				// and return an exception code if the 
 				// translation couldn't be completed.
 
+	void SwappingTLB(int virtAddr);
+
     void RaiseException(ExceptionType which, int badVAddr);
 				// Trap to the Nachos kernel, because of a
 				// system call or other exception.  

@@ -52,12 +52,32 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
+	int addr = machine->ReadRegister(BadVAddrReg);
 
-    if ((which == SyscallException) && (type == SC_Halt)) {
-	DEBUG('a', "Shutdown, initiated by user program.\n");
-   	interrupt->Halt();
-    } else {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(FALSE);
-    }
+	switch (which)
+	{
+		case SyscallException:
+			switch (type)
+			{
+				case SC_Halt:
+					DEBUG('a', "Shutdown, initiated by user program.\n");
+					interrupt->Halt();
+					break;
+
+				default:
+					break;
+			}
+			break;
+
+		case PageFaultException:
+			if (machine->tlb != NULL)
+			{
+				machine->SwappingTLB(addr);
+			}
+			break;
+
+		default:
+			printf("Unexpected user mode exception %d %d\n", which, type);
+			break;
+	}
 }

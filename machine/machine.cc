@@ -64,7 +64,10 @@ Machine::Machine(bool debug)
 #ifdef USE_TLB
     tlb = new TranslationEntry[TLBSize];
     for (i = 0; i < TLBSize; i++)
-	tlb[i].valid = FALSE;
+	{
+		tlb[i].valid = FALSE;
+		tlb[i].lastTime = 0;
+	}
     pageTable = NULL;
 #else	// use linear page table
     tlb = NULL;
