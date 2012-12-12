@@ -31,11 +31,14 @@ class AddrSpace {
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
 
+	OpenFile *getExeFileId() { return (exeFileId); }
+
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
-					// for now!
+									// for now!
     unsigned int numPages;		// Number of pages in the virtual 
-					// address space
+								// address space
+	OpenFile *exeFileId;				// Executable file identifier
 };
 
 #endif // ADDRSPACE_H

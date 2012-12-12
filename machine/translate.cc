@@ -33,6 +33,7 @@
 #include "machine.h"
 #include "addrspace.h"
 #include "system.h"
+#include "noff.h"
 
 // Routines for converting Words and Short Words to and from the
 // simulated machine's format of little endian.  These end up
@@ -319,6 +320,34 @@ Machine::SwappingTLB(int virtAddr)
 	// 2. Is the virtual page in the memory or not.
 	if (!pageTable[vpn].valid)
 	{
+		OpenFile *executable;
+		int memPosition;
+		int filePosition;
+
+		// 2-1. Get new physical page number.
+		int physicalPage = machine->phyMemManager->FindOnePage();
+
+		// 2-2. Is that page dirty or not.
+		if (machine->phyMemManager->getDirty(physicalPage))
+		{
+			executable = (OpenFile *)machine->phyMemManager->getFileIdentifier(physicalPage);
+			filePosition = pageTable[vpn].virtualPage * PageSize + sizeof(NoffHeader);
+			memPosition = pageTable[vpn].physicalPage * PageSize;
+			executable->WriteAt(&(machine->mainMemory[memPosition]), PageSize, filePosition);
+		}
+
+		// 2-3. Mapping the executable file identifier with physical page. 
+		executable = currentThread->space->getExeFileId();
+		machine->phyMemManager->setFileIdentifier(physicalPage, (int)executable);
+
+		// 2-4. Update page table with new physical page number.
+		pageTable[vpn].valid = true;
+		pageTable[vpn].physicalPage = physicalPage;
+
+		// 2-5. Write related content in executable file to physical memory.
+		filePosition = pageTable[vpn].virtualPage * PageSize + sizeof(NoffHeader);
+		memPosition = pageTable[vpn].physicalPage * PageSize;
+		executable->ReadAt(&(machine->mainMemory[memPosition]), PageSize, filePosition);
 	}
 
 	// 3. Find the proper TLB entry.

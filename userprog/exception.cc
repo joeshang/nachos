@@ -73,6 +73,7 @@ ExceptionHandler(ExceptionType which)
 			if (machine->tlb != NULL)
 			{
 				machine->SwappingTLB(addr);
+				stats->numPageFaults++;
 			}
 			break;
 
