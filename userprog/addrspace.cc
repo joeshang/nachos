@@ -168,3 +168,16 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+//----------------------------------------------------------------------
+// AddrSpace::plusRefCount()
+//	Decrease reference count of address space until 0.	
+//----------------------------------------------------------------------
+
+void AddrSpace::decRefCount()
+{
+	if (refCount != 0)
+	{
+		refCount--;
+	}
+}

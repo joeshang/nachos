@@ -31,15 +31,16 @@ class TranslationEntry {
   public:
     int virtualPage;  	// The page number in virtual memory.
     int physicalPage;  	// The page number in real memory (relative to the
-			//  start of "mainMemory"
+						//  start of "mainMemory"
+	int swappingPage;	// The page number offset in swapping space.
     bool valid;         // If this bit is set, the translation is ignored.
-			// (In other words, the entry hasn't been initialized.)
-    bool readOnly;	// If this bit is set, the user program is not allowed
-			// to modify the contents of the page.
+						// (In other words, the entry hasn't been initialized.)
+	bool readOnly;		// If this bit is set, the user program is not allowed
+						// to modify the contents of the page.
     bool use;           // This bit is set by the hardware every time the
-			// page is referenced or modified.
+						// page is referenced or modified.
     bool dirty;         // This bit is set by the hardware every time the
-			// page is modified.
+						// page is modified.
 	int lastTime;
 };
 
