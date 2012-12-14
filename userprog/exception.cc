@@ -25,6 +25,19 @@
 #include "system.h"
 #include "syscall.h"
 
+static void ThreadFuncForUserProg(int arg);
+
+static void SysCallHaltHandler();
+static void SysCallExecHandler();
+static void SysCallExitHandler();
+static void SysCallJoinHandler();
+static void SysCallForkHandler();
+static void SysCallYieldHandler();
+static void SysCallPrintHandler();
+
+static void ExceptionPageFaultHanlder();
+
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -52,7 +65,6 @@ void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
-	int addr = machine->ReadRegister(BadVAddrReg);
 
 	switch (which)
 	{
@@ -60,8 +72,31 @@ ExceptionHandler(ExceptionType which)
 			switch (type)
 			{
 				case SC_Halt:
-					DEBUG('a', "Shutdown, initiated by user program.\n");
-					interrupt->Halt();
+					SysCallHaltHandler();
+					break;
+
+				case SC_Exec:
+					SysCallExecHandler();
+					break;
+
+				case SC_Exit:
+					SysCallExitHandler();
+					break;
+
+				case SC_Join:
+					SysCallJoinHandler();
+					break;
+
+				case SC_Fork:
+					SysCallForkHandler();
+					break;
+
+				case SC_Yield:
+					SysCallYieldHandler();
+					break;
+
+				case SC_Print:
+					SysCallPrintHandler();
 					break;
 
 				default:
@@ -70,15 +105,108 @@ ExceptionHandler(ExceptionType which)
 			break;
 
 		case PageFaultException:
-			if (machine->tlb != NULL)
-			{
-				machine->SwappingTLB(addr);
-				stats->numPageFaults++;
-			}
+			ExceptionPageFaultHanlder();
 			break;
 
 		default:
 			printf("Unexpected user mode exception %d %d\n", which, type);
 			break;
+	}
+}
+
+static void ThreadFuncForUserProg(int arg)
+{
+	currentThread->RestoreUserState();
+	// TODO: Need to modify 3 registers: pc, next pc, sp
+
+	machine->Run();
+}
+
+static void SysCallHaltHandler()
+{
+	DEBUG('a', "Shutdown, initiated by user program.\n");
+	interrupt->Halt();
+}
+
+static void SysCallExecHandler()
+{
+	char fileName[100];
+	int arg = machine->ReadRegister(4);
+	int i = 0;
+	do
+	{
+		machine->ReadMem(arg + i, 1, (int*)&fileName[i]);
+	}while(fileName[i++] != '\0');
+
+	OpenFile* executable = fileSystem->Open(fileName);
+	if (executable != NULL)	
+	{
+		Thread* thread = threadManager->createThread(fileName);
+		thread->space = memoryManager->createAddrSpace(thread->getThreadID(), executable);
+		machine->WriteRegister(2, thread->getThreadID());
+
+		// TODO:fork
+	}
+	else
+	{
+		machine->WriteRegister(2, -1);
+	}
+	
+	machine->PCForward();
+}
+
+static void SysCallExitHandler()
+{
+	int threadId = currentThread->getThreadID();
+	memoryManager->deleteAddrSpace(threadId);
+	currentThread->Finish();
+
+	machine->PCForward();
+}
+
+static void SysCallJoinHandler()
+{
+}
+
+static void SysCallForkHandler()
+{
+	Thread* thread = threadManager->createThread("UserProg");
+	thread->space = memoryManager->shareAddrSpace(currentThread->getThreadID(),
+												  thread->getThreadID());
+	int userFunc = machine->ReadRegister(4);
+	thread->SetUserRegister(PCReg, userFunc);
+	thread->SetUserRegister(NextPCReg, userFunc + 4);
+
+	DEBUG('a', "Fork from thread %d -> thread %d\n", 
+			currentThread->getThreadID(),
+			thread->getThreadID());
+
+	thread->Fork(ThreadFuncForUserProg, 0);
+
+	machine->PCForward();
+}
+
+static void SysCallYieldHandler()
+{
+	currentThread->Yield();
+
+	machine->PCForward();
+}
+
+static void SysCallPrintHandler()
+{
+	int num = machine->ReadRegister(4);
+	printf("%d\n", num);
+
+	machine->PCForward();
+}
+
+static void ExceptionPageFaultHanlder()
+{
+	if (machine->tlb != NULL)
+	{
+		int addr = machine->ReadRegister(BadVAddrReg);
+		machine->SwappingTLB(addr);
+		stats->numPageFaults++;
 	}
 }

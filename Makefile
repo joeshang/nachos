@@ -27,6 +27,13 @@ clean:
 	rm -rf */nachos
 	rm -rf */swtch.s
 	rm -rf */*~
+
+cleanall:
+	rm -rf *~
+	rm -rf */*.o
+	rm -rf */nachos
+	rm -rf */swtch.s
+	rm -rf */*~
 	rm -rf test/*.coff
 	rm -rf bin/coff2flat
 	rm -rf bin/coff2noff

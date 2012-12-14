@@ -74,12 +74,16 @@ BitMap::Clear(int which)
 bool 
 BitMap::Test(int which)
 {
-    ASSERT(which >= 0 && which < numBits);
-    
-    if (map[which / BitsInWord] & (1 << (which % BitsInWord)))
-	return TRUE;
-    else
-	return FALSE;
+	ASSERT(which >= 0 && which < numBits);
+
+	if (map[which / BitsInWord] & (1 << (which % BitsInWord)))
+	{
+		return TRUE;
+	}
+	else
+	{
+		return FALSE;
+	}
 }
 
 //----------------------------------------------------------------------
@@ -94,12 +98,17 @@ BitMap::Test(int which)
 int 
 BitMap::Find() 
 {
-    for (int i = 0; i < numBits; i++)
-	if (!Test(i)) {
-	    Mark(i);
-	    return i;
+	for (int i = 0; i < numBits; i++)
+	{
+		if (!Test(i))
+	   	{
+			Mark(i);
+
+			return i;
+		}
 	}
-    return -1;
+
+	return -1;
 }
 
 //----------------------------------------------------------------------
@@ -111,11 +120,17 @@ BitMap::Find()
 int 
 BitMap::NumClear() 
 {
-    int count = 0;
+	int count = 0;
 
-    for (int i = 0; i < numBits; i++)
-	if (!Test(i)) count++;
-    return count;
+	for (int i = 0; i < numBits; i++)
+	{
+		if (!Test(i)) 
+		{
+			count++;
+		}
+	}
+
+	return count;
 }
 
 //----------------------------------------------------------------------

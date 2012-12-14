@@ -90,11 +90,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	// first, set up the translation 
 	mainThreadId = currentThread->getThreadID();
 	refCount = 1;
-	numPages = size;
-	pageTable = new TranslationEntry[size];
+	pageTable = new TranslationEntry[numPages];
 
 	// Initialize thread's page table.
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < numPages; i++)
 	{
 		pageTable[i].virtualPage = i;
 		pageTable[i].physicalPage = -1;

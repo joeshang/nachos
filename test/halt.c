@@ -12,9 +12,27 @@
 
 #include "syscall.h"
 
+int space[1024];
+
+void test()
+{
+	Print(2);
+	Yield();
+	Print(4);
+	Yield();
+}
+
 int
 main()
 {
+//	Print(1);
+//	Fork(test);
+//	Yield();
+//	Print(3);
+//	Yield();
+	Exec("shell");
+
     Halt();
     /* not reached */
 }
+

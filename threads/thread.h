@@ -131,6 +131,8 @@ class Thread {
     int userRegisters[NumTotalRegs];	// user-level CPU register state
 
   public:
+	void SetUserRegister(int id, int value); // set user-level register value
+
     void SaveUserState();		// save user-level register state
     void RestoreUserState();		// restore user-level register state
 

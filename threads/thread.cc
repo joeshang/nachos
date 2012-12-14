@@ -69,7 +69,7 @@ Thread::~Thread()
 		DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
 	}
 
-#ifdef USER_PROGRAM
+#ifdef VM
 	memoryManager->deleteAddrSpace(threadID);
 #endif
 
@@ -196,7 +196,7 @@ Thread::Yield ()
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL)
    	{
-		if (nextThread->getPriority() < currentThread->getPriority())
+		if (nextThread->getPriority() <= currentThread->getPriority())
 		{
 			scheduler->ReadyToRun(this);
 			scheduler->Run(nextThread);
@@ -319,7 +319,9 @@ void
 Thread::SaveUserState()
 {
     for (int i = 0; i < NumTotalRegs; i++)
-	userRegisters[i] = machine->ReadRegister(i);
+	{
+		userRegisters[i] = machine->ReadRegister(i);
+	}
 }
 
 //----------------------------------------------------------------------
@@ -335,6 +337,26 @@ void
 Thread::RestoreUserState()
 {
     for (int i = 0; i < NumTotalRegs; i++)
-	machine->WriteRegister(i, userRegisters[i]);
+	{
+		machine->WriteRegister(i, userRegisters[i]);
+	}
 }
+
+//----------------------------------------------------------------------
+// Thread::SetUserRegister
+//	Set user-level registers' value.	
+//
+//	"id" is the name of user-level register.
+//	"value" is the value which you want to set in the register.
+//----------------------------------------------------------------------
+
+void
+Thread::SetUserRegister(int id, int value)
+{
+	if (id >= 0 && id < NumTotalRegs)
+	{
+		userRegisters[id] = value;
+	}
+}
+
 #endif

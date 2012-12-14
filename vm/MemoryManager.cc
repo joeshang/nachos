@@ -62,10 +62,11 @@ MemoryManager::process(int virtPage)
 			// 3. Check the page whether dirty or not.
 			if (swapPageTable[swapVirtPage].dirty) // Modified, moving page into swapping space.
 			{
-				swapPageTable[swapVirtPage].valid = FALSE;
 				swapPageTable[swapVirtPage].swappingPage = swappingManager->swapIn(swapPhyPage);
 				// TODO: handle swapIn return -1 (No Space in swapping file).
 			}
+
+			swapPageTable[swapVirtPage].valid = FALSE;
 		}
 
 		// 4. Set new information of physical page.

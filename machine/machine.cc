@@ -227,3 +227,10 @@ void Machine::WriteRegister(int num, int value)
 	registers[num] = value;
     }
 
+void
+Machine::PCForward()
+{
+	WriteRegister(PrevPCReg, registers[PCReg]);
+	WriteRegister(PCReg, registers[PCReg] + sizeof(int));
+	WriteRegister(NextPCReg, registers[NextPCReg] + sizeof(int));
+}

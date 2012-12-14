@@ -34,17 +34,18 @@ PhyMemManager::findOnePage(bool* isSwapping)
 			if (i == 0)
 			{
 				min = phyMemPageTable[i].lastModifyTime;
+				page = 0;
 			}
 			else
 			{
 				if (phyMemPageTable[i].lastModifyTime < min)
 				{
 					min = phyMemPageTable[i].lastModifyTime;
+					page = i;
 				}
 			}
 		}	
 
-		page = i;
 		*isSwapping = TRUE;
 	}
 
