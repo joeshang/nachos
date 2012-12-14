@@ -61,7 +61,6 @@ Machine::Machine(bool debug)
         registers[i] = 0;
 	}
 
-	phyMemManager = new PhyMemManager(NumPhysPages);
     mainMemory = new char[MemorySize];
     for (i = 0; i < MemorySize; i++)
 	{
@@ -70,10 +69,11 @@ Machine::Machine(bool debug)
 	
 #ifdef USE_TLB
     tlb = new TranslationEntry[TLBSize];
+	lastModifyTime = new unsigned int[TLBSize];
     for (i = 0; i < TLBSize; i++)
 	{
 		tlb[i].valid = FALSE;
-		tlb[i].lastTime = 0;
+		lastModifyTime[i] = 0;
 	}
     pageTable = NULL;
 #else	// use linear page table
@@ -92,13 +92,14 @@ Machine::Machine(bool debug)
 
 Machine::~Machine()
 {
-	delete phyMemManager;
     delete [] mainMemory;
 
     if (tlb != NULL)
 	{
         delete [] tlb;
 	}
+
+	delete [] lastModifyTime;
 }
 
 //----------------------------------------------------------------------

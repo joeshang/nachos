@@ -77,8 +77,7 @@ USERPROG_H = ../userprog/addrspace.h\
 	../machine/console.h\
 	../machine/machine.h\
 	../machine/mipssim.h\
-	../machine/translate.h\
-	../machine/phymemmanager.h
+	../machine/translate.h
 
 USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/bitmap.cc\
@@ -87,15 +86,20 @@ USERPROG_C = ../userprog/addrspace.cc\
 	../machine/console.cc\
 	../machine/machine.cc\
 	../machine/mipssim.cc\
-	../machine/translate.cc\
-	../machine/phymemmanager.cc
+	../machine/translate.cc
 
 USERPROG_O = addrspace.o bitmap.o exception.o progtest.o console.o machine.o \
-	mipssim.o translate.o phymemmanager.o
+	mipssim.o translate.o
 
-VM_H = VirtMemManager.h 
-VM_C = VirtMemManager.cc
-VM_O = VirtMemManager.o
+VM_H = ../vm/VirtMemManager.h \
+	   ../vm/PhyMemManager.h \
+	   ../vm/SwappingManager.h \
+	   ../vm/MemoryManager.h
+VM_C = ../vm/VirtMemManager.cc \
+	   ../vm/PhyMemManager.cc \
+	   ../vm/SwappingManager.cc \
+	   ../vm/MemoryManager.cc
+VM_O = VirtMemManager.o PhyMemManager.o SwappingManager.o MemoryManager.o
 
 FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\

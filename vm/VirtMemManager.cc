@@ -1,3 +1,4 @@
+#include "system.h"
 #include "VirtMemManager.h"
 
 //----------------------------------------------------------------------
@@ -10,7 +11,7 @@
 
 VirtMemManager::VirtMemManager(int size)
 {
-	ASSERT(size < 0);
+	ASSERT(size > 0);
 
 	virtPageNums = 0;
 	virtMemTableSize = size;
@@ -33,11 +34,11 @@ VirtMemManager::~VirtMemManager()
 	{
 		if (virtMemTable[i] != NULL)
 		{
-			delete virtMemTable[i];
+			delete [] virtMemTable[i]->pageTable;
 		}
 	}
 
-	delete virtMemTable;
+	delete [] virtMemTable;
 }
 
 //----------------------------------------------------------------------
@@ -46,12 +47,12 @@ VirtMemManager::~VirtMemManager()
 //	page table creation of every thread and combine them into an overall
 //	table. Return NULL if threadId/size invalid.
 //
-//	"size" -- the number of page table in every thread.
 //	"mainThreadId" -- the main thread which hold address space.
+//	"size" -- the number of page table in every thread.
 //----------------------------------------------------------------------
 
 TranslationEntry*
-VirtMemManager::createPageTable(int size, int mainThreadId)
+VirtMemManager::createPageTable(int mainThreadId, int size)
 {
 	VirtMemEntry* entry;
 
@@ -132,8 +133,6 @@ VirtMemManager::sharePageTable(int mainThreadId, int currThreadId)
 void
 VirtMemManager::deletePageTable(int threadId)
 {
-	int physicalPage;
-
 	if (threadId >= 0 && threadId < virtMemTableSize)
 	{
 		VirtMemEntry* entry = virtMemTable[threadId];
@@ -149,16 +148,32 @@ VirtMemManager::deletePageTable(int threadId)
 			{
 				for (int i = 0; i < entry->size; i++)
 				{
-					physicalPage = entry->pageTable[i].physicalPage;
-					// TODO: physical memory manager handle those physical pages.
+					// Clear pages in physical memory.
+					if (entry->pageTable[i].valid)
+					{
+						int physicalPage = entry->pageTable[i].physicalPage;
+						memoryManager->getPhyMemManager()->clearOnePage(physicalPage);
+					}
+
+					// Clear pages in swapping space.
+					if (entry->pageTable[i].swappingPage != -1)
+					{
+						int swappingPage = entry->pageTable[i].swappingPage;
+						memoryManager->getSwappingManager()->clearOnePage(swappingPage);
+					}
+
+					// TODO: A better way is using message communication(eg.singal-slot)
+					// instead of global variation.
+
 				}
 
+				delete [] entry->pageTable;
 				delete entry;
 			}
 			else
 			{
 				// Raising an assert because of deleting parent thread first.
-				ASSERT(TRUE);
+				ASSERT(FALSE);
 			}
 
 			entry = NULL;

@@ -46,6 +46,11 @@ extern FileSystem  *fileSystem;
 extern SynchDisk   *synchDisk;
 #endif
 
+#ifdef VM
+#include "MemoryManager.h"
+extern MemoryManager *memoryManager;
+#endif
+
 #ifdef NETWORK
 #include "post.h"
 extern PostOffice* postOffice;

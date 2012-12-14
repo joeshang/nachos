@@ -24,7 +24,6 @@
 #include "copyright.h"
 #include "utility.h"
 #include "translate.h"
-#include "phymemmanager.h"
 #include "disk.h"
 
 // Definitions related to the size, and format of user memory
@@ -41,12 +40,12 @@ enum ExceptionType { NoException,           // Everything ok!
 		     SyscallException,      // A program executed a system call.
 		     PageFaultException,    // No valid translation found
 		     ReadOnlyException,     // Write attempted to page marked 
-					    // "read-only"
+									// "read-only"
 		     BusErrorException,     // Translation resulted in an 
-					    // invalid physical address
+									// invalid physical address
 		     AddressErrorException, // Unaligned reference or one that
-					    // was beyond the end of the
-					    // address space
+									// was beyond the end of the
+									// address space
 		     OverflowException,     // Integer overflow in add or sub.
 		     IllegalInstrException, // Unimplemented or reserved instr.
 		     
@@ -156,9 +155,8 @@ class Machine {
 // Note that *all* communication between the user program and the kernel 
 // are in terms of these data structures.
 
-	PhyMemManager *phyMemManager;
     char *mainMemory;		// physical memory to store user program,
-				// code and data, while executing
+							// code and data, while executing
     int registers[NumTotalRegs]; // CPU registers, for executing user programs
 
 
@@ -181,16 +179,17 @@ class Machine {
 // the contents of the TLB are free to be modified by the kernel software.
 
     TranslationEntry *tlb;		// this pointer should be considered 
-					// "read-only" to Nachos kernel code
+								// "read-only" to Nachos kernel code
+	unsigned int *lastModifyTime;
 
     TranslationEntry *pageTable;
     unsigned int pageTableSize;
 
   private:
     bool singleStep;		// drop back into the debugger after each
-				// simulated instruction
+							// simulated instruction
     int runUntilTime;		// drop back into the debugger when simulated
-				// time reaches this value
+							// time reaches this value
 };
 
 extern void ExceptionHandler(ExceptionType which);

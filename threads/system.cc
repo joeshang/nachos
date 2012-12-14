@@ -32,6 +32,10 @@ SynchDisk   *synchDisk;
 Machine *machine;	// user program memory and registers
 #endif
 
+#ifdef VM
+MemoryManager* memoryManager;
+#endif
+
 #ifdef NETWORK
 PostOffice *postOffice;
 #endif
@@ -161,6 +165,10 @@ Initialize(int argc, char **argv)
     fileSystem = new FileSystem(format);
 #endif
 
+#ifdef VM
+	memoryManager= new MemoryManager();
+#endif
+
 #ifdef NETWORK
     postOffice = new PostOffice(netname, rely, 10);
 #endif
@@ -176,6 +184,10 @@ Cleanup()
     printf("\nCleaning up...\n");
 #ifdef NETWORK
     delete postOffice;
+#endif
+
+#ifdef VM
+	delete memoryManager;
 #endif
     
 #ifdef USER_PROGRAM

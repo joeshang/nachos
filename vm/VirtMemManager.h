@@ -5,7 +5,7 @@
 
 #define MAX_VIRT_PAGES 4096
 
-// The followint class defines an entry in virtual memory table. Each process 
+// The following class defines an entry in virtual memory table. Each process 
 // has a related virtual memory entry because thread has its own address space.
 
 class VirtMemEntry
