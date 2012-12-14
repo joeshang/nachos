@@ -1,6 +1,7 @@
 #ifndef MEMORYMANAGER_H
 #define MEMORYMANAGER_H
 
+#include "openfile.h"
 #include "VirtMemManager.h"
 #include "PhyMemManager.h"
 #include "SwappingManager.h"
@@ -13,9 +14,9 @@ class MemoryManager
 
 		void process(int virtPage);
 
-		TranslationEntry* createPageTable(int mainThreadId, int size);
-		TranslationEntry* sharePageTable(int mainThreadId, int currThreadId);
-		void deletePageTable(int threadId);
+		AddrSpace* createAddrSpace(int mainThreadId, OpenFile* executable);
+		AddrSpace* shareAddrSpace(int mainThreadId, int currThreadId);
+		void deleteAddrSpace(int threadId);
 
 		VirtMemManager* getVirtMemManager()	{ return virtMemManager; }
 		PhyMemManager* getPhyMemManager() { return phyMemManager; }

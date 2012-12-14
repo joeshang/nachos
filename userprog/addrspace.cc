@@ -88,8 +88,22 @@ AddrSpace::AddrSpace(OpenFile *executable)
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 	// first, set up the translation 
-	int currThreadId = currentThread->getThreadID();
-	pageTable = memoryManager->createPageTable(currThreadId, numPages);
+	mainThreadId = currentThread->getThreadID();
+	refCount = 1;
+	numPages = size;
+	pageTable = new TranslationEntry[size];
+
+	// Initialize thread's page table.
+	for (int i = 0; i < size; i++)
+	{
+		pageTable[i].virtualPage = i;
+		pageTable[i].physicalPage = -1;
+		pageTable[i].swappingPage = -1;
+		pageTable[i].valid = FALSE;
+		pageTable[i].readOnly = FALSE;
+		pageTable[i].use = FALSE;
+		pageTable[i].dirty = FALSE;
+	}
 }
 
 //----------------------------------------------------------------------
@@ -100,6 +114,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 AddrSpace::~AddrSpace()
 {
 	delete exeFileId;
+	delete [] pageTable;
 }
 
 //----------------------------------------------------------------------

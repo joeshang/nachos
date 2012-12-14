@@ -32,13 +32,18 @@ class AddrSpace {
     void RestoreState();		// info on a context switch 
 
 	OpenFile *getExeFileId() { return (exeFileId); }
+	int getMainThreadId() { return (mainThreadId); }
 	unsigned int getRefCount() { return (refCount); }
+	unsigned int getNumPages() { return (numPages); }
+	TranslationEntry* getPageTable() { return (pageTable); }
+
 	void incRefCount() { (refCount++); }
 	void decRefCount();
 
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 									// for now!
+	int mainThreadId;				// The thread ID which hold address space.
 	unsigned int numPages;			// Number of pages in address space.
     unsigned int refCount;			// Reference counts of address space.
 	OpenFile *exeFileId;			// Executable file identifier

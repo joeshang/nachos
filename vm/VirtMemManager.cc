@@ -14,12 +14,12 @@ VirtMemManager::VirtMemManager(int size)
 	ASSERT(size > 0);
 
 	virtPageNums = 0;
-	virtMemTableSize = size;
+	virtMemCtrlTableSize = size;
 	
-	virtMemTable = new VirtMemEntry*[size];
+	virtMemCtrlTable = new AddrSpace*[size];
 	for (int i = 0; i < size; i++)
 	{
-		virtMemTable[i] = NULL;
+		virtMemCtrlTable[i] = NULL;
 	}
 }
 
@@ -30,99 +30,77 @@ VirtMemManager::VirtMemManager(int size)
 
 VirtMemManager::~VirtMemManager()
 {
-	for (int i = 0; i < virtMemTableSize; i++)
-	{
-		if (virtMemTable[i] != NULL)
-		{
-			delete [] virtMemTable[i]->pageTable;
-		}
-	}
-
-	delete [] virtMemTable;
+	delete [] virtMemCtrlTable;
 }
 
 //----------------------------------------------------------------------
-// VirtMemManager::createVirtMemTable
+// VirtMemManager::createAddrSpace
 //	Create a page table for thread. The virtual memory manager take over 
-//	page table creation of every thread and combine them into an overall
-//	table. Return NULL if threadId/size invalid.
+//	address space  creation of every thread and combine them into an 
+//	overall table.
 //
 //	"mainThreadId" -- the main thread which hold address space.
-//	"size" -- the number of page table in every thread.
+//	"executable" -- the executable file identifier.
 //----------------------------------------------------------------------
 
-TranslationEntry*
-VirtMemManager::createPageTable(int mainThreadId, int size)
+AddrSpace*
+VirtMemManager::createAddrSpace(int mainThreadId, OpenFile* executable)
 {
-	VirtMemEntry* entry;
-
-	// Invalid parameter check.
-	if (mainThreadId < 0 || mainThreadId >= virtMemTableSize 
-		|| size < 0 || virtPageNums + size > MAX_VIRT_PAGES)
-	{	
-		return NULL;
-	}
+	AddrSpace* entry;
 
 	// Check whether the entry valid or not.
-	entry = virtMemTable[mainThreadId];
+	entry = virtMemCtrlTable[mainThreadId];
 	if (entry != NULL)
 	{
-		return entry->pageTable;
+		return entry;
 	}
 	
 	// Empty entry, so create it.
-	entry = new VirtMemEntry;
-	virtMemTable[mainThreadId] = entry;
-	entry->mainThreadId = mainThreadId;
-	entry->refCount = 1;
-	entry->size = size;
-	entry->pageTable = new TranslationEntry[size];
+	entry = new AddrSpace(executable);
 
-	virtPageNums += size;
-
-	// Initialize thread's page table.
-	for (int i = 0; i < size; i++)
+	int size = entry->getNumPages();
+	if (virtPageNums + size > MAX_VIRT_PAGES)
 	{
-		entry->pageTable[i].virtualPage = i;
-		entry->pageTable[i].physicalPage = -1;
-		entry->pageTable[i].swappingPage = -1;
-		entry->pageTable[i].valid = FALSE;
-		entry->pageTable[i].readOnly = FALSE;
-		entry->pageTable[i].use = FALSE;
-		entry->pageTable[i].dirty = FALSE;
+		delete entry;
+		entry = NULL;
+	}
+	else
+	{
+		virtMemCtrlTable[mainThreadId] = entry;
+		virtPageNums += size;
 	}
 
-	return entry->pageTable;
+	return entry;
 }
 
 //----------------------------------------------------------------------
-// VirtMemManager::shareVirtMemTable
-//	Children thread ask for parent thread's page table. 
+// VirtMemManager::shareAddrSpace
+//	Children thread ask for parent thread's address space.
 //
 //	"mainThreadId" -- parent thread identifier.
 //	"currThreadId" -- children thread identifier.
 //----------------------------------------------------------------------
 
-TranslationEntry*
-VirtMemManager::sharePageTable(int mainThreadId, int currThreadId)
+AddrSpace*
+VirtMemManager::shareAddrSpace(int mainThreadId, int currThreadId)
 {
 	// Invalid parameter check.
 	if (currThreadId < 0 || mainThreadId < 0
-		|| currThreadId >= virtMemTableSize
-		|| mainThreadId >= virtMemTableSize
-		|| virtMemTable[mainThreadId] == NULL)
+		|| currThreadId >= virtMemCtrlTableSize
+		|| mainThreadId >= virtMemCtrlTableSize
+		|| virtMemCtrlTable[mainThreadId] == NULL)
 	{
 		return NULL;
 	}
 
-	virtMemTable[currThreadId] = virtMemTable[mainThreadId];
-	virtMemTable[mainThreadId]->refCount++;	
+	virtMemCtrlTable[currThreadId] = virtMemCtrlTable[mainThreadId];
+	virtMemCtrlTable[mainThreadId]->incRefCount();
 
-	return (virtMemTable[mainThreadId]->pageTable);	
+	return virtMemCtrlTable[mainThreadId];
 }
 
 //----------------------------------------------------------------------
-// VirtMemManager::deleteVirtMemTable
+// VirtMemManager::deleteAddrSpace
 //	Delete a page table for thread. 
 //	NOTICE: If you want to delete the parent thread, you should delete 
 //			its child thread first, or it will raise an assert!
@@ -131,35 +109,38 @@ VirtMemManager::sharePageTable(int mainThreadId, int currThreadId)
 //----------------------------------------------------------------------
 
 void
-VirtMemManager::deletePageTable(int threadId)
+VirtMemManager::deleteAddrSpace(int threadId)
 {
-	if (threadId >= 0 && threadId < virtMemTableSize)
+	if (threadId >= 0 && threadId < virtMemCtrlTableSize)
 	{
-		VirtMemEntry* entry = virtMemTable[threadId];
+		AddrSpace* entry = virtMemCtrlTable[threadId];
 		if (entry != NULL)
 		{
+			int mainThreadId = entry->getMainThreadId();
+			unsigned int refCount = entry->getRefCount();
+			unsigned int size = entry->getNumPages();
+			TranslationEntry* pageTable = entry->getPageTable();
+
 			// If the child thread dealloc itself, just decrease reference count.
-			if (entry->mainThreadId != threadId && entry->refCount > 1)
+			if (mainThreadId != threadId && refCount > 1)
 			{
-				entry->refCount--;
+				entry->decRefCount();
 			}
 			// Delete the address space which process hold(all threads share).
-			else if (entry->mainThreadId == threadId && entry->refCount == 1)
+			else if (mainThreadId == threadId && refCount == 1)
 			{
-				for (int i = 0; i < entry->size; i++)
+				for (int i = 0; i < size; i++)
 				{
 					// Clear pages in physical memory.
-					if (entry->pageTable[i].valid)
+					if (pageTable[i].valid)
 					{
-						int physicalPage = entry->pageTable[i].physicalPage;
-						memoryManager->getPhyMemManager()->clearOnePage(physicalPage);
+						memoryManager->getPhyMemManager()->clearOnePage(pageTable[i].physicalPage);
 					}
 
 					// Clear pages in swapping space.
-					if (entry->pageTable[i].swappingPage != -1)
+					if (pageTable[i].swappingPage != -1)
 					{
-						int swappingPage = entry->pageTable[i].swappingPage;
-						memoryManager->getSwappingManager()->clearOnePage(swappingPage);
+						memoryManager->getSwappingManager()->clearOnePage(pageTable[i].swappingPage);
 					}
 
 					// TODO: A better way is using message communication(eg.singal-slot)
@@ -167,7 +148,6 @@ VirtMemManager::deletePageTable(int threadId)
 
 				}
 
-				delete [] entry->pageTable;
 				delete entry;
 			}
 			else

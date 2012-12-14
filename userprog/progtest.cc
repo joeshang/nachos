@@ -31,7 +31,7 @@ StartProcess(char *filename)
 		printf("Unable to open file %s\n", filename);
 		return;
 	}
-    space = new AddrSpace(executable);    
+    space = memoryManager->createAddrSpace(currentThread->getThreadID(), executable);
     currentThread->space = space;
 
     space->InitRegisters();		// set the initial register values

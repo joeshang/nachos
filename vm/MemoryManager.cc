@@ -18,77 +18,72 @@ MemoryManager::~MemoryManager()
 	delete swappingManager;
 }
 
-TranslationEntry* 
-MemoryManager::createPageTable(int mainThreadId, int size)
+AddrSpace*
+MemoryManager::createAddrSpace(int mainThreadId, OpenFile* executable)
 {
-	return (virtMemManager->createPageTable(mainThreadId, size));
+	return (virtMemManager->createAddrSpace(mainThreadId, executable));
 }
 
-TranslationEntry*
-MemoryManager::sharePageTable(int mainThreadId, int currThreadId)
+AddrSpace*
+MemoryManager::shareAddrSpace(int mainThreadId, int currThreadId)
 {
-	return (virtMemManager->sharePageTable(mainThreadId, currThreadId));
+	return (virtMemManager->shareAddrSpace(mainThreadId, currThreadId));
 }
 
 void
-MemoryManager::deletePageTable(int threadId)
+MemoryManager::deleteAddrSpace(int threadId)
 {
-	virtMemManager->deletePageTable(threadId);
+	virtMemManager->deleteAddrSpace(threadId);
 }
 
 void
 MemoryManager::process(int virtPage)
 {
-	bool isSwapping;
 	int swapPhyPage;
-	int mainThreadId;
-	int threadVirtPage;
-	int currThreadId;
-	TranslationEntry* currPageEntry;
-	TranslationEntry* swapPageEntry;
-	VirtMemEntry** globalVirtMemTable;
 
-	currThreadId = currentThread->getThreadID();
-	globalVirtMemTable = virtMemManager->getVirtMemTable();
-	currPageEntry = &(globalVirtMemTable[currThreadId]->pageTable[virtPage]);
+	int currThreadId = currentThread->getThreadID();
+	AddrSpace** globalVirtMemTable = virtMemManager->getVirtMemCtrlTable();
+	TranslationEntry* currPageTable = globalVirtMemTable[currThreadId]->getPageTable();
 
-	if (!currPageEntry->valid)
+	if (!currPageTable[virtPage].valid)
 	{
+		bool isSwapping;
+
 		// 1. Find one physical page to swap out.
 		swapPhyPage = phyMemManager->findOnePage(&isSwapping);
 
 		if (isSwapping) // Check is any physical page swapping?
 		{
 			// 2. Get this swapping page's virtual page table.
-			mainThreadId = phyMemManager->getMainThreadId(swapPhyPage);
-			threadVirtPage = phyMemManager->getVirtualPage(swapPhyPage);
-			swapPageEntry = &(globalVirtMemTable[mainThreadId]->pageTable[threadVirtPage]);
+			int swapMainThreadId = phyMemManager->getMainThreadId(swapPhyPage);
+			int swapVirtPage = phyMemManager->getVirtualPage(swapPhyPage);
+			TranslationEntry* swapPageTable = globalVirtMemTable[swapMainThreadId]->getPageTable();
 			
 			// 3. Check the page whether dirty or not.
-			if (swapPageEntry->dirty) // Modified, moving page into swapping space.
+			if (swapPageTable[swapVirtPage].dirty) // Modified, moving page into swapping space.
 			{
-				swapPageEntry->valid = FALSE;
-				swapPageEntry->swappingPage = swappingManager->swapIn(swapPhyPage);
+				swapPageTable[swapVirtPage].valid = FALSE;
+				swapPageTable[swapVirtPage].swappingPage = swappingManager->swapIn(swapPhyPage);
 				// TODO: handle swapIn return -1 (No Space in swapping file).
 			}
 		}
 
 		// 4. Set new information of physical page.
-		mainThreadId = globalVirtMemTable[currThreadId]->mainThreadId;
+		int mainThreadId = globalVirtMemTable[currThreadId]->getMainThreadId();
 		phyMemManager->setVirtualPage(swapPhyPage, virtPage);
 		phyMemManager->setMainThreadId(swapPhyPage, mainThreadId);
 		phyMemManager->setLastModifyTime(swapPhyPage, stats->totalTicks);
 
 		// 5. Modify attributes of related virtual page.
-		currPageEntry->valid = TRUE;
-		currPageEntry->physicalPage = swapPhyPage;
+		currPageTable[virtPage].valid = TRUE;
+		currPageTable[virtPage].physicalPage = swapPhyPage;
 
 		// 6. Load contents of virtual page into virtual page.
-		if (currPageEntry->dirty) // Virtual page in the swapping space.
+		if (currPageTable[virtPage].dirty) // Virtual page in the swapping space.
 		{
-			swappingManager->swapOut(swapPhyPage, currPageEntry->swappingPage);
-			currPageEntry->dirty = FALSE;
-			currPageEntry->swappingPage = -1;
+			swappingManager->swapOut(swapPhyPage, currPageTable[virtPage].swappingPage);
+			currPageTable[virtPage].dirty = FALSE;
+			currPageTable[virtPage].swappingPage = -1;
 		}
 		else // Virtual page in the disk.
 		{
