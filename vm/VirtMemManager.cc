@@ -56,7 +56,7 @@ VirtMemManager::createAddrSpace(int mainThreadId, OpenFile* executable)
 	}
 	
 	// Empty entry, so create it.
-	entry = new AddrSpace(executable);
+	entry = new AddrSpace(mainThreadId, executable);
 
 	int size = entry->getNumPages();
 	if (virtPageNums + size > MAX_VIRT_PAGES)

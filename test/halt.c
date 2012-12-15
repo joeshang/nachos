@@ -16,22 +16,26 @@ int space[1024];
 
 void test()
 {
-	Print(2);
+	Print("Enter test", sizeof("Enter test"));
 	Yield();
-	Print(4);
+
+	Print("Back to test", sizeof("Back to test"));
 	Yield();
 }
 
 int
 main()
 {
-//	Print(1);
-//	Fork(test);
-//	Yield();
-//	Print(3);
-//	Yield();
-	Exec("shell");
+	Print("Enter main", sizeof("Enter main"));
+	Fork(test);
 
+	Print("Back to main", sizeof("Back to main"));
+	Yield();
+
+	//Print("Exec sort", sizeof("Exec sort"));
+	//Exec("../test/sort");
+
+	Print("Final in main and Halt\n", sizeof("Final in main and Halt\n"));
     Halt();
     /* not reached */
 }

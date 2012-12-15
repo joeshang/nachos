@@ -310,7 +310,7 @@ Machine::SwappingTLB(int virtAddr)
 {
 	int i;
 	int swap;
-	int minTime = lastModifyTime[0];
+	int minTime;
     unsigned int vpn;
 	TranslationEntry *entry = &tlb[0];
 
@@ -330,7 +330,7 @@ Machine::SwappingTLB(int virtAddr)
 			break;
 		}
 
-		if (lastModifyTime[i] < minTime)
+		if (i == 0 || lastModifyTime[i] < minTime)
 		{
 			minTime = lastModifyTime[i];
 			entry = &tlb[i];

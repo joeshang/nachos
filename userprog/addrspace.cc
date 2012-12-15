@@ -60,7 +60,7 @@ SwapHeader (NoffHeader *noffH)
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
-AddrSpace::AddrSpace(OpenFile *executable)
+AddrSpace::AddrSpace(int threadId, OpenFile* executable)
 {
     NoffHeader noffH;
     unsigned int i, size;
@@ -80,15 +80,10 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    //ASSERT(numPages <= NumPhysPages);		// check we're not trying
-						// to run anything too big --
-						// at least until we have
-						// virtual memory
-
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 	// first, set up the translation 
-	mainThreadId = currentThread->getThreadID();
+	mainThreadId = threadId;
 	refCount = 1;
 	pageTable = new TranslationEntry[numPages];
 
@@ -185,3 +180,4 @@ void AddrSpace::decRefCount()
 		refCount--;
 	}
 }
+

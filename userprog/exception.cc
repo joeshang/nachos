@@ -118,6 +118,12 @@ static void ThreadFuncForUserProg(int arg)
 {
 	currentThread->RestoreUserState();
 	// TODO: Need to modify 3 registers: pc, next pc, sp
+	if (arg && currentThread->space != NULL)
+	{
+		// Exec should initialize registers and restore address space.
+		currentThread->space->InitRegisters();
+		currentThread->space->RestoreState();
+	}
 
 	machine->Run();
 }
@@ -145,7 +151,9 @@ static void SysCallExecHandler()
 		thread->space = memoryManager->createAddrSpace(thread->getThreadID(), executable);
 		machine->WriteRegister(2, thread->getThreadID());
 
-		// TODO:fork
+		DEBUG('a', "Exec from thread %d -> executable %s\n", 
+				currentThread->getThreadID(), fileName);
+		thread->Fork(ThreadFuncForUserProg, 1);
 	}
 	else
 	{
@@ -176,6 +184,7 @@ static void SysCallForkHandler()
 	int userFunc = machine->ReadRegister(4);
 	thread->SetUserRegister(PCReg, userFunc);
 	thread->SetUserRegister(NextPCReg, userFunc + 4);
+	thread->SetUserRegister(StackReg, machine->ReadRegister(StackReg) - 4);
 
 	DEBUG('a', "Fork from thread %d -> thread %d\n", 
 			currentThread->getThreadID(),
@@ -195,8 +204,19 @@ static void SysCallYieldHandler()
 
 static void SysCallPrintHandler()
 {
-	int num = machine->ReadRegister(4);
-	printf("%d\n", num);
+	int msg = machine->ReadRegister(4);
+	int size = machine->ReadRegister(5);
+	char* buf = new char[size + 5];
+
+	int i = 0;
+	do
+	{
+		machine->ReadMem(msg + i, 1, (int*)&buf[i]);
+	}while(buf[i++] != '\0');
+
+	printf("%s\n", buf);
+
+	delete buf;
 
 	machine->PCForward();
 }
