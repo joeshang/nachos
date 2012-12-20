@@ -15,39 +15,45 @@ PhyMemManager::~PhyMemManager()
 }
 
 int
-PhyMemManager::findOnePage(bool* isSwapping)
+PhyMemManager::findOneEmptyPage()
 {
 	int page;
-	int min;
 
 	if (phyMemoryMap->NumClear() != 0)
 	{
 		page = phyMemoryMap->Find();
-		*isSwapping = FALSE;
 	}
 	else
 	{
-		int i;
+		page = -1;
+	}
 
-		for (i = 0; i < phyPageNums; i++)
+	return page;
+}
+
+int
+PhyMemManager::swapOnePage()
+{
+	int page;
+	int min;
+
+	for (int i = 0; i < phyPageNums; i++)
+	{
+		if (i == 0)
 		{
-			if (i == 0)
+			min = phyMemPageTable[i].lastModifyTime;
+			page = 0;
+		}
+		else
+		{
+			if (phyMemPageTable[i].lastModifyTime < min)
 			{
 				min = phyMemPageTable[i].lastModifyTime;
-				page = 0;
+				page = i;
 			}
-			else
-			{
-				if (phyMemPageTable[i].lastModifyTime < min)
-				{
-					min = phyMemPageTable[i].lastModifyTime;
-					page = i;
-				}
-			}
-		}	
+		}
+	}	
 
-		*isSwapping = TRUE;
-	}
 
 	return page;
 }

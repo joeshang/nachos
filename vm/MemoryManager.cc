@@ -47,14 +47,13 @@ MemoryManager::process(int virtPage)
 
 	if (!currPageTable[virtPage].valid)
 	{
-		bool isSwapping;
-
 		// 1. Find one physical page to swap out.
-		swapPhyPage = phyMemManager->findOnePage(&isSwapping);
+		swapPhyPage = phyMemManager->findOneEmptyPage();
 
-		if (isSwapping) // Check is any physical page swapping?
+		if (swapPhyPage == -1) // Check is any physical page swapping?
 		{
 			// 2. Get this swapping page's virtual page table.
+			swapPhyPage = phyMemManager->swapOnePage();
 			int swapMainThreadId = phyMemManager->getMainThreadId(swapPhyPage);
 			int swapVirtPage = phyMemManager->getVirtualPage(swapPhyPage);
 			TranslationEntry* swapPageTable = globalVirtMemTable[swapMainThreadId]->getPageTable();

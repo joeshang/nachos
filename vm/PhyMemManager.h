@@ -23,7 +23,8 @@ class PhyMemManager
 		PhyMemManager(int pageNums);
 		~PhyMemManager();
 
-		int findOnePage(bool* isSwapping);
+		int findOneEmptyPage();
+		int swapOnePage();
 		void clearOnePage(int phyPage);
 		bool isPageValid(int phyPage);
 
