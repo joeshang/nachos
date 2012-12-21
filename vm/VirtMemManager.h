@@ -7,21 +7,6 @@
 
 #define MAX_VIRT_PAGES 4096
 
-//// The following class defines an entry in virtual memory table. Each process 
-//// has a related virtual memory entry because thread has its own address space.
-//
-//class VirtMemEntry
-//{
-//	public:
-//		int mainThreadId;	// The main thread which hold address space.
-//		int refCount;		// Reference count for threads' sharing.
-//							// Threads in process share address space, so many 
-//							// threads may point to one entry.
-//		int size;			// Page table size.
-//		TranslationEntry* pageTable; 	// Page table which contain
-//										// thread's address space.
-//};
-
 // The following class defines a manager of virtual memory. It takes over the
 // creation and initialization of thread's page table, so it contains all
 // virtual pages in system including page status.
@@ -32,7 +17,7 @@ class VirtMemManager
 		VirtMemManager(int size);
 		~VirtMemManager();
 
-		AddrSpace** getVirtMemCtrlTable() { return (virtMemCtrlTable); }
+		AddrSpace* getAddrSpaceOfThread(int threadId);
 
 		AddrSpace* createAddrSpace(int mainThreadId, OpenFile* executable);
 		AddrSpace* shareAddrSpace(int mainThreadId, int currThreadId);

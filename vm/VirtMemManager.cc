@@ -33,6 +33,19 @@ VirtMemManager::~VirtMemManager()
 	delete [] virtMemCtrlTable;
 }
 
+AddrSpace*
+VirtMemManager::getAddrSpaceOfThread(int threadId)
+{
+	if (threadId >= 0 && threadId < virtMemCtrlTableSize)
+	{
+		return (virtMemCtrlTable[threadId]);
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
 //----------------------------------------------------------------------
 // VirtMemManager::createAddrSpace
 //	Create a page table for thread. The virtual memory manager take over 

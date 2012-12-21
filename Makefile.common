@@ -77,7 +77,8 @@ USERPROG_H = ../userprog/addrspace.h\
 	../machine/console.h\
 	../machine/machine.h\
 	../machine/mipssim.h\
-	../machine/translate.h
+	../machine/translate.h\
+	../machine/TLBManager.h
 
 USERPROG_C = ../userprog/addrspace.cc\
 	../userprog/bitmap.cc\
@@ -86,10 +87,11 @@ USERPROG_C = ../userprog/addrspace.cc\
 	../machine/console.cc\
 	../machine/machine.cc\
 	../machine/mipssim.cc\
-	../machine/translate.cc
+	../machine/translate.cc\
+	../machine/TLBManager.cc
 
 USERPROG_O = addrspace.o bitmap.o exception.o progtest.o console.o machine.o \
-	mipssim.o translate.o
+	mipssim.o translate.o TLBManager.o
 
 VM_H = ../vm/VirtMemManager.h \
 	   ../vm/PhyMemManager.h \

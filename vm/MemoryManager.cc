@@ -19,6 +19,12 @@ MemoryManager::~MemoryManager()
 }
 
 AddrSpace*
+MemoryManager::getAddrSpaceOfThread(int threadId)
+{
+	return (virtMemManager->getAddrSpaceOfThread(threadId));
+}
+
+AddrSpace*
 MemoryManager::createAddrSpace(int mainThreadId, OpenFile* executable)
 {
 	return (virtMemManager->createAddrSpace(mainThreadId, executable));
@@ -42,8 +48,8 @@ MemoryManager::process(int virtPage)
 	int swapPhyPage;
 
 	int currThreadId = currentThread->getThreadID();
-	AddrSpace** globalVirtMemTable = virtMemManager->getVirtMemCtrlTable();
-	TranslationEntry* currPageTable = globalVirtMemTable[currThreadId]->getPageTable();
+	AddrSpace* currThreadAddrSpace = virtMemManager->getAddrSpaceOfThread(currThreadId);
+	TranslationEntry* currPageTable = currThreadAddrSpace->getPageTable();
 
 	if (!currPageTable[virtPage].valid)
 	{
@@ -56,7 +62,7 @@ MemoryManager::process(int virtPage)
 			swapPhyPage = phyMemManager->swapOnePage();
 			int swapMainThreadId = phyMemManager->getMainThreadId(swapPhyPage);
 			int swapVirtPage = phyMemManager->getVirtualPage(swapPhyPage);
-			TranslationEntry* swapPageTable = globalVirtMemTable[swapMainThreadId]->getPageTable();
+			TranslationEntry* swapPageTable = virtMemManager->getAddrSpaceOfThread(swapMainThreadId)->getPageTable();
 			
 			// 3. Check the page whether dirty or not.
 			if (swapPageTable[swapVirtPage].dirty) // Modified, moving page into swapping space.
@@ -69,7 +75,7 @@ MemoryManager::process(int virtPage)
 		}
 
 		// 4. Set new information of physical page.
-		int mainThreadId = globalVirtMemTable[currThreadId]->getMainThreadId();
+		int mainThreadId = currThreadAddrSpace->getMainThreadId();
 		phyMemManager->setVirtualPage(swapPhyPage, virtPage);
 		phyMemManager->setMainThreadId(swapPhyPage, mainThreadId);
 		phyMemManager->setLastModifyTime(swapPhyPage, stats->totalTicks);

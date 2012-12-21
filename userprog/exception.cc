@@ -225,8 +225,18 @@ static void ExceptionPageFaultHanlder()
 {
 	if (machine->tlb != NULL)
 	{
+		// 1. Get the TLB miss address and calculate which page it belong to.
 		int addr = machine->ReadRegister(BadVAddrReg);
-		machine->SwappingTLB(addr);
+		int vpn = (unsigned) addr / PageSize;
+
+		// 2. Handle whether this virtual page in memory or not.
+		// After this step, this virtual page is in the physical memory.
+		memoryManager->process(vpn);
+
+		// 3. Cache this page in TLB.
+		machine->tlb->cacheOnePageEntry(vpn);
+
+		// 4. Page fault statistics.
 		stats->numPageFaults++;
 	}
 }

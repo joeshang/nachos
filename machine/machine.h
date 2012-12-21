@@ -23,6 +23,7 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "TLBManager.h"
 #include "translate.h"
 #include "disk.h"
 
@@ -139,8 +140,6 @@ class Machine {
     				// and return an exception code if the 
 				// translation couldn't be completed.
 
-	void SwappingTLB(int virtAddr);
-
     void RaiseException(ExceptionType which, int badVAddr);
 				// Trap to the Nachos kernel, because of a
 				// system call or other exception.  
@@ -178,9 +177,8 @@ class Machine {
 // Thus the TLB pointer should be considered as *read-only*, although 
 // the contents of the TLB are free to be modified by the kernel software.
 
-    TranslationEntry *tlb;		// this pointer should be considered 
+    TLBManager *tlb;			// this pointer should be considered 
 								// "read-only" to Nachos kernel code
-	unsigned int *lastModifyTime;
 
     TranslationEntry *pageTable;
     unsigned int pageTableSize;

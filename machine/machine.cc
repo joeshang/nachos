@@ -68,13 +68,7 @@ Machine::Machine(bool debug)
 	}
 	
 #ifdef USE_TLB
-    tlb = new TranslationEntry[TLBSize];
-	lastModifyTime = new unsigned int[TLBSize];
-    for (i = 0; i < TLBSize; i++)
-	{
-		tlb[i].valid = FALSE;
-		lastModifyTime[i] = 0;
-	}
+	tlb = new TLBManager(TLBSize);
     pageTable = NULL;
 #else	// use linear page table
     tlb = NULL;
@@ -96,10 +90,8 @@ Machine::~Machine()
 
     if (tlb != NULL)
 	{
-        delete [] tlb;
+        delete tlb;
 	}
-
-	delete [] lastModifyTime;
 }
 
 //----------------------------------------------------------------------

@@ -33,6 +33,7 @@
 #include "machine.h"
 #include "addrspace.h"
 #include "system.h"
+#include "TLBManager.h"
 
 // Routines for converting Words and Short Words to and from the
 // simulated machine's format of little endian.  These end up
@@ -223,10 +224,6 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 		DEBUG('a', "alignment problem at %d, size %d!\n", virtAddr, size);
 		return AddressErrorException;
     }
-   
-    // we must have either a TLB or a page table, but not both!
-    // ASSERT(tlb == NULL || pageTable == NULL);	
-    // ASSERT(tlb != NULL || pageTable != NULL);	
 
 	// calculate the virtual page number, and offset within the page,
 	// from the virtual address
@@ -252,15 +249,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     }
    	else
    	{
-        for (entry = NULL, i = 0; i < TLBSize; i++)
-		{
-    	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) 
-			{
-				entry = &tlb[i];			// FOUND!
-				lastModifyTime[i] = stats->totalTicks;
-				break;
-			}
-		}
+		entry = tlb->findPageEntry(currentThread->getThreadID(), vpn);
 
 		if (entry == NULL) // not found
 		{				
@@ -299,50 +288,3 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     return NoException;
 }
 
-//----------------------------------------------------------------------
-// Machine::SwappingTLB
-//
-//	"virtAddr" -- the virtual address which TLB miss
-//----------------------------------------------------------------------
-
-void
-Machine::SwappingTLB(int virtAddr)
-{
-	int i;
-	int swap;
-	int minTime;
-    unsigned int vpn;
-	TranslationEntry *entry = &tlb[0];
-
-	// 1. Calculate virtual page which contains virtual address.
-    vpn = (unsigned) virtAddr / PageSize;
-
-	// 2. Is the virtual page in the memory or not.
-	memoryManager->process(vpn);
-
-	// 3. Find the proper TLB entry.
-	for (i = 0; i < TLBSize; i++)
-	{
-		if (!tlb[i].valid) 
-		{
-			entry = &tlb[i];
-			swap = i;
-			break;
-		}
-
-		if (i == 0 || lastModifyTime[i] < minTime)
-		{
-			minTime = lastModifyTime[i];
-			entry = &tlb[i];
-			swap = i;
-		}
-	}
-
-	// 4. Put the page entry into TLB by swapping.
-	if (entry->valid)
-	{
-		pageTable[entry->virtualPage] = *entry;
-	}
-	*entry = pageTable[vpn];
-	lastModifyTime[swap] = stats->totalTicks;	
-}
