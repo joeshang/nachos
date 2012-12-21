@@ -2,13 +2,13 @@
 #define PHYMEMMANAGER_H
 
 #include "bitmap.h"
+#include "SwappingStrategy.h"
 
 // The following class defines an entry of physical page.
 
 class PhyMemPageEntry
 {
 	public:
-		int lastModifyTime;
 		int mainThreadId;
 		int virtualPage;
 };
@@ -32,12 +32,13 @@ class PhyMemManager
 		void setMainThreadId(int phyPage, int threadId);
 		int getVirtualPage(int phyPage);
 		void setVirtualPage(int phyPage, int virtualPage);
-		void setLastModifyTime(int phyPage, int time);
+		void updatePageWeight(int phyPage);
 
 	private:
 		int phyPageNums;
 		BitMap* phyMemoryMap;
 		PhyMemPageEntry* phyMemPageTable;
+		SwappingStrategy* swappingStrategy;
 };
 
 #endif

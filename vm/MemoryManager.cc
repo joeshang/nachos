@@ -78,7 +78,7 @@ MemoryManager::process(int virtPage)
 		int mainThreadId = currThreadAddrSpace->getMainThreadId();
 		phyMemManager->setVirtualPage(swapPhyPage, virtPage);
 		phyMemManager->setMainThreadId(swapPhyPage, mainThreadId);
-		phyMemManager->setLastModifyTime(swapPhyPage, stats->totalTicks);
+		phyMemManager->updatePageWeight(swapPhyPage);
 
 		// 5. Modify attributes of related virtual page.
 		currPageTable[virtPage].valid = TRUE;

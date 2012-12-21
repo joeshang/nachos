@@ -2,6 +2,7 @@
 #define TLBMANAGER_H
 
 #include "translate.h"
+#include "SwappingStrategy.h"
 
 class TLBManager
 {
@@ -18,8 +19,8 @@ class TLBManager
 		int tlbSize;
 		int emptyEntryNum;
 		int* relatedThreadId;		// Related thread id of page entry.
-		int* lastModifyTime;
 		TranslationEntry* tlbPageTable;	// TLB page table.
+		SwappingStrategy* swappingStrategy;
 };
 
 #endif

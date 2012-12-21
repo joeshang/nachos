@@ -1,27 +1,28 @@
 #include "addrspace.h"
 #include "system.h"
 #include "TLBManager.h"
+#include "SwappingLRU.h"
 
 TLBManager::TLBManager(int size)
 {
 	tlbSize = size;
 	emptyEntryNum = size;
+	swappingStrategy = new SwappingLRU(size);
+
 	relatedThreadId = new int[size];
-	lastModifyTime = new int[size];
 	tlbPageTable = new TranslationEntry[size];
 
 	for (int i = 0; i < size; i++)
 	{
 		tlbPageTable[i].valid = FALSE;
 		relatedThreadId[i] = -1;
-		lastModifyTime[i] = 0;
 	}
 }
 
 TLBManager::~TLBManager()
 {
+	delete swappingStrategy;
 	delete [] relatedThreadId;
-	delete [] lastModifyTime;
 	delete [] tlbPageTable;
 }
 
@@ -37,8 +38,9 @@ TLBManager::findPageEntry(int threadId, unsigned int pageNum)
 			&& tlbPageTable[i].virtualPage == pageNum)
 		{
 			// Found the page entry in TLB.
-			lastModifyTime[i] = stats->totalTicks;
 			entry = &tlbPageTable[i];
+			swappingStrategy->updateElementWeight(i);
+
 			break;
 		}
 	}
@@ -49,34 +51,8 @@ TLBManager::findPageEntry(int threadId, unsigned int pageNum)
 void
 TLBManager::cacheOnePageEntry(unsigned int pageNum)
 {
-	int target;
-
 	// 1. Find one proper entry in TLB.
-	if (emptyEntryNum > 0)
-	{
-		for (int i = 0; i < tlbSize; i++)
-		{
-			if (!tlbPageTable[i].valid)
-			{
-				target = i;
-				emptyEntryNum--;
-
-				break;
-			}
-		}
-	}
-	else
-	{
-		int min;
-		for (int i = 0; i < tlbSize; i++)
-		{
-			if (i == 0 || lastModifyTime[i] < min)
-			{
-				min = lastModifyTime[i];
-				target = i;
-			}
-		}
-	}
+	int target = swappingStrategy->findOneElementToSwap();
 
 	// 2. Write the target page entry back to global page table.
 	if (tlbPageTable[target].valid)
@@ -89,6 +65,6 @@ TLBManager::cacheOnePageEntry(unsigned int pageNum)
 	// 3. Cache the new page entry in TLB.
 	tlbPageTable[target] = machine->pageTable[pageNum];
 	relatedThreadId[target] = currentThread->getThreadID();
-	lastModifyTime[target] = stats->totalTicks;
+	swappingStrategy->updateElementWeight(target);
 }
 

@@ -1,17 +1,20 @@
 #include "system.h"
 #include "PhyMemManager.h"
+#include "SwappingLRU.h"
 
 PhyMemManager::PhyMemManager(int pageNums)
 {
 	phyPageNums = pageNums;
 	phyMemoryMap = new BitMap(pageNums);
 	phyMemPageTable = new PhyMemPageEntry[pageNums];
+	swappingStrategy = new SwappingLRU(pageNums);
 }
 
 PhyMemManager::~PhyMemManager()
 {
 	delete phyMemoryMap;
 	delete [] phyMemPageTable;
+	delete swappingStrategy;
 }
 
 int
@@ -34,28 +37,7 @@ PhyMemManager::findOneEmptyPage()
 int
 PhyMemManager::swapOnePage()
 {
-	int page;
-	int min;
-
-	for (int i = 0; i < phyPageNums; i++)
-	{
-		if (i == 0)
-		{
-			min = phyMemPageTable[i].lastModifyTime;
-			page = 0;
-		}
-		else
-		{
-			if (phyMemPageTable[i].lastModifyTime < min)
-			{
-				min = phyMemPageTable[i].lastModifyTime;
-				page = i;
-			}
-		}
-	}	
-
-
-	return page;
+	return (swappingStrategy->findOneElementToSwap());
 }
 
 void
@@ -124,10 +106,10 @@ PhyMemManager::setVirtualPage(int phyPage, int virtualPage)
 }
 
 void
-PhyMemManager::setLastModifyTime(int phyPage, int time)
+PhyMemManager::updatePageWeight(int phyPage)
 {
 	if (phyMemoryMap->Test(phyPage))
 	{
-		phyMemPageTable[phyPage].lastModifyTime = time;
+		swappingStrategy->updateElementWeight(phyPage);
 	}
 }

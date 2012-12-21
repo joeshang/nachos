@@ -96,12 +96,15 @@ USERPROG_O = addrspace.o bitmap.o exception.o progtest.o console.o machine.o \
 VM_H = ../vm/VirtMemManager.h \
 	   ../vm/PhyMemManager.h \
 	   ../vm/SwappingManager.h \
-	   ../vm/MemoryManager.h
+	   ../vm/MemoryManager.h \
+	   ../vm/SwappingStrategy.h \
+	   ../vm/SwappingLRU.h
 VM_C = ../vm/VirtMemManager.cc \
 	   ../vm/PhyMemManager.cc \
 	   ../vm/SwappingManager.cc \
-	   ../vm/MemoryManager.cc
-VM_O = VirtMemManager.o PhyMemManager.o SwappingManager.o MemoryManager.o
+	   ../vm/MemoryManager.cc \
+	   ../vm/SwappingLRU.cc
+VM_O = VirtMemManager.o PhyMemManager.o SwappingManager.o MemoryManager.o SwappingLRU.o
 
 FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\
