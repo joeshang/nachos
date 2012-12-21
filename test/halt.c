@@ -32,8 +32,8 @@ main()
 	Print("Back to main", sizeof("Back to main"));
 	Yield();
 
-	//Print("Exec sort", sizeof("Exec sort"));
-	//Exec("../test/sort");
+	Print("Exec sort", sizeof("Exec sort"));
+	Exec("../test/sort");
 
 	Print("Final in main and Halt\n", sizeof("Final in main and Halt\n"));
     Halt();
