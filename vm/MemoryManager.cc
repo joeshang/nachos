@@ -68,6 +68,7 @@ MemoryManager::process(int virtPage)
 			if (swapPageTable[swapVirtPage].dirty) // Modified, moving page into swapping space.
 			{
 				swapPageTable[swapVirtPage].swappingPage = swappingManager->swapIn(swapPhyPage);
+				machine->tlb->invalidPageEntry(swapMainThreadId, swapVirtPage);
 				// TODO: handle swapIn return -1 (No Space in swapping file).
 			}
 

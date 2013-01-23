@@ -27,7 +27,7 @@ TLBManager::~TLBManager()
 }
 
 TranslationEntry*
-TLBManager::findPageEntry(int threadId, unsigned int pageNum)
+TLBManager::findPageEntry(int threadId, unsigned int vpn)
 {
 	TranslationEntry* entry = NULL;
 
@@ -35,7 +35,7 @@ TLBManager::findPageEntry(int threadId, unsigned int pageNum)
 	{
 		if (tlbPageTable[i].valid == TRUE
 			&& relatedThreadId[i] == threadId
-			&& tlbPageTable[i].virtualPage == pageNum)
+			&& tlbPageTable[i].virtualPage == vpn)
 		{
 			// Found the page entry in TLB.
 			entry = &tlbPageTable[i];
@@ -49,10 +49,42 @@ TLBManager::findPageEntry(int threadId, unsigned int pageNum)
 }
 
 void
-TLBManager::cacheOnePageEntry(unsigned int pageNum)
+TLBManager::invalidPageEntry(int threadId, unsigned int vpn)
 {
+	TranslationEntry* entry = findPageEntry(threadId, vpn);
+	if (entry)
+	{
+		entry->valid = FALSE;
+		if (emptyEntryNum < tlbSize)
+		{
+			emptyEntryNum++;
+		}
+	}
+}
+
+void
+TLBManager::cacheOnePageEntry(unsigned int vpn)
+{
+	int target;
+
 	// 1. Find one proper entry in TLB.
-	int target = swappingStrategy->findOneElementToSwap();
+	if (emptyEntryNum > 0)
+	{
+		for (int i = 0; i < tlbSize; i++)
+		{
+			if (!tlbPageTable[i].valid)
+			{
+				target = i;
+				emptyEntryNum--;
+				
+				break;
+			}
+		}
+	}
+	else
+	{
+   		target = swappingStrategy->findOneElementToSwap();
+	}
 
 	// 2. Write the target page entry back to global page table.
 	if (tlbPageTable[target].valid)
@@ -63,7 +95,7 @@ TLBManager::cacheOnePageEntry(unsigned int pageNum)
 	}
 
 	// 3. Cache the new page entry in TLB.
-	tlbPageTable[target] = machine->pageTable[pageNum];
+	tlbPageTable[target] = machine->pageTable[vpn];
 	relatedThreadId[target] = currentThread->getThreadID();
 	swappingStrategy->updateElementWeight(target);
 }

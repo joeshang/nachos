@@ -23,16 +23,26 @@ main()
     int i, j, k;
 
     for (i = 0; i < Dim; i++)		/* first initialize the matrices */
-	for (j = 0; j < Dim; j++) {
-	     A[j][i] = i;
-	     B[j][i] = j;
-	     C[j][i] = i+j;
+	{
+		for (j = 0; j < Dim; j++) 
+		{
+			A[j][i] = i;
+			B[j][i] = j;
+			C[j][i] = i+j;
+		}
 	}
-//
-//    for (i = 0; i < Dim; i++)		/* then multiply them together */
-//	for (j = 0; j < Dim; j++)
-//            for (k = 0; k < Dim; k++)
-//		 C[i][j] += A[i][k] * B[k][j];
-//
-//    Exit(C[Dim-1][Dim-1]);		/* and then we're done */
+
+
+    for (i = 0; i < Dim; i++)		/* then multiply them together */
+	{
+		for (j = 0; j < Dim; j++)
+		{
+			for (k = 0; k < Dim; k++)
+			{
+				C[i][j] += A[i][k] * B[k][j];
+			}
+		}
+	}
+
+    Exit(C[Dim-1][Dim-1]);		/* and then we're done */
 }

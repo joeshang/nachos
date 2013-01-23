@@ -10,10 +10,12 @@ class TLBManager
 		TLBManager(int size);
 		~TLBManager();
 
-		// Find one page entry by page number.
-		TranslationEntry* findPageEntry(int threadId ,unsigned int pageNum);
+		// Find one page entry by virtual page number.
+		TranslationEntry* findPageEntry(int threadId, unsigned int vpn);
+		// Invalid one page entry by virtual page number.
+		void invalidPageEntry(int threadId, unsigned int vpn);
 		// Cache one page entry in TLB by page number.
-		void cacheOnePageEntry(unsigned int pageNum);
+		void cacheOnePageEntry(unsigned int vpn);
 
 	private:
 		int tlbSize;

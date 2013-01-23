@@ -35,6 +35,7 @@ SwappingManager::swapIn(int physicalPage)
 	}
 	else
 	{
+		printf("Swap In Failed!\n");
 		swappingPage = -1;
 	}
 
@@ -56,6 +57,10 @@ SwappingManager::swapOut(int physicalPage, int swappingPage)
 							 swappingPosition);
 
 		swappingSpaceMap->Clear(swappingPage);
+	}
+	else
+	{
+		printf("Swap Out Failed!\n");
 	}
 }
 
