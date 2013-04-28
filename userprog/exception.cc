@@ -116,14 +116,23 @@ ExceptionHandler(ExceptionType which)
 
 static void ThreadFuncForUserProg(int arg)
 {
-	currentThread->RestoreUserState();
-	// TODO: Need to modify 3 registers: pc, next pc, sp
-	if (arg && currentThread->space != NULL)
-	{
-		// Exec should initialize registers and restore address space.
-		currentThread->space->InitRegisters();
-		currentThread->space->RestoreState();
-	}
+    switch (arg)
+    {
+        case 0: // Fork
+            // Fork just restore registers.
+            currentThread->RestoreUserState();
+            break;
+        case 1: // Exec
+            if (currentThread->space != NULL)
+            {
+                // Exec should initialize registers and restore address space.
+                currentThread->space->InitRegisters();
+                currentThread->space->RestoreState();
+            }
+            break;
+        default:
+            break;
+    }
 
 	machine->Run();
 }
@@ -182,9 +191,15 @@ static void SysCallForkHandler()
 	thread->space = memoryManager->shareAddrSpace(currentThread->getThreadID(),
 												  thread->getThreadID());
 	int userFunc = machine->ReadRegister(4);
+
+    // Copy machine registers of current thread to new thread
+    thread->SaveUserState(); 
+
+    // Modify PC/SP register of new thread
 	thread->SetUserRegister(PCReg, userFunc);
 	thread->SetUserRegister(NextPCReg, userFunc + 4);
-	thread->SetUserRegister(StackReg, machine->ReadRegister(StackReg) - 4);
+    // Every thread has its own private stack space
+	thread->SetUserRegister(StackReg, thread->space->getThreadStackTop(thread->getThreadID()));
 
 	DEBUG('a', "Fork from thread %d -> thread %d\n", 
 			currentThread->getThreadID(),

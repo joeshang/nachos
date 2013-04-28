@@ -17,7 +17,9 @@
 #include "filesys.h"
 #include "translate.h"
 
-#define UserStackSize		1024 	// increase this as necessary!
+#define UserThreadMax       10
+#define UserThreadStackSize 1024    // increase this as necessary!
+#define UserStackSize		(UserThreadMax * UserThreadStackSize) 	
 
 class AddrSpace {
   public:
@@ -41,12 +43,17 @@ class AddrSpace {
 	void incRefCount() { (refCount++); }
 	void decRefCount();
 
+    void allocStackSpace(int threadId);
+    void freeStackSpace(int threadId);
+    int getThreadStackTop(int threadId);
+
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 									// for now!
 	int mainThreadId;				// The thread ID which hold address space.
 	unsigned int numPages;			// Number of pages in address space.
     unsigned int refCount;			// Reference counts of address space.
+    int stackSpace[UserThreadMax];  // The usage of user thread's private stack space.
 	OpenFile *exeFileId;			// Executable file identifier
 };
 

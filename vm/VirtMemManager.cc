@@ -108,6 +108,7 @@ VirtMemManager::shareAddrSpace(int mainThreadId, int currThreadId)
 
 	virtMemCtrlTable[currThreadId] = virtMemCtrlTable[mainThreadId];
 	virtMemCtrlTable[mainThreadId]->incRefCount();
+    virtMemCtrlTable[mainThreadId]->allocStackSpace(currThreadId);
 
 	return virtMemCtrlTable[mainThreadId];
 }
@@ -138,6 +139,7 @@ VirtMemManager::deleteAddrSpace(int threadId)
 			if (mainThreadId != threadId && refCount > 1)
 			{
 				entry->decRefCount();
+                entry->freeStackSpace(threadId);
 			}
 			// Delete the address space which process hold(all threads share).
 			else if (mainThreadId == threadId && refCount == 1)
@@ -156,8 +158,7 @@ VirtMemManager::deleteAddrSpace(int threadId)
 						memoryManager->getSwappingManager()->clearOnePage(pageTable[i].swappingPage);
 					}
 
-					// TODO: A better way is using message communication(eg.singal-slot)
-					// instead of global variation.
+					// TODO: A better way is using message communication(eg.singal-slot) instead of global variation.
 
 				}
 

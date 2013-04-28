@@ -98,6 +98,12 @@ AddrSpace::AddrSpace(int threadId, OpenFile* executable)
 		pageTable[i].use = FALSE;
 		pageTable[i].dirty = FALSE;
 	}
+
+    // initialize user thread's private stack usage.
+    for (int i = 0; i < UserThreadMax; i++)
+    {
+        stackSpace[i] = -1;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -169,7 +175,7 @@ void AddrSpace::RestoreState()
 }
 
 //----------------------------------------------------------------------
-// AddrSpace::plusRefCount()
+// AddrSpace::plusRefCount
 //	Decrease reference count of address space until 0.	
 //----------------------------------------------------------------------
 
@@ -181,3 +187,69 @@ void AddrSpace::decRefCount()
 	}
 }
 
+//----------------------------------------------------------------------
+// AddrSpace::allocStackSpace
+//	Alloc thread's private stack space from address space.
+//
+//	"threadId" -- The thread which request stack space.
+//----------------------------------------------------------------------
+void AddrSpace::allocStackSpace(int threadId)
+{
+    int i;
+
+    for (i = 0; i < UserThreadMax; i++)
+    {
+        if (stackSpace[i] == -1)
+        {
+            stackSpace[i] = threadId;
+            break;
+        }
+    }
+}
+
+//----------------------------------------------------------------------
+// AddrSpace::freeStackSpace
+//	Free thread's private stack space to address space.
+//
+//	"threadId" -- The thread which free stack space.
+//----------------------------------------------------------------------
+void AddrSpace::freeStackSpace(int threadId)
+{
+    int i;
+
+    for (i = 0; i < UserThreadMax; i++)
+    {
+        if (stackSpace[i] == threadId)
+        {
+            stackSpace[i] = -1;
+            break;
+        }
+    }
+}
+
+//----------------------------------------------------------------------
+// AddrSpace::getThreadStackTop
+//	Get the top position of thread's private stack.
+//
+//	"threadId" -- The thread which want to get stack top position.
+//----------------------------------------------------------------------
+int AddrSpace::getThreadStackTop(int threadId)
+{
+    int i;
+    int stackTop = -1;
+
+    for (i = 0; i < UserThreadMax; i++)
+    {
+        if (stackSpace[i] == threadId)
+        {
+            break;
+        }
+    }
+
+    if (i < UserThreadMax)
+    {
+        stackTop = (numPages * PageSize) - (i * UserThreadStackSize) - 16;
+    }
+
+    return stackTop;
+}
