@@ -163,14 +163,13 @@ VirtMemManager::deleteAddrSpace(int threadId)
 				}
 
 				delete entry;
+                virtMemCtrlTable[threadId] = NULL;
 			}
 			else
 			{
 				// Raising an assert because of deleting parent thread first.
 				ASSERT(FALSE);
 			}
-
-			entry = NULL;
 		}
 	}
 }

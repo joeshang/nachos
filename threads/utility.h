@@ -50,7 +50,7 @@
 
 typedef void (*VoidFunctionPtr)(int arg); 
 typedef void (*VoidNoArgFunctionPtr)(); 
-
+typedef int  (*CompFunctionPtr)(void *target, void *data);
 
 // Include interface that isolates us from the host machine system library.
 // Requires definition of bool, and VoidFunctionPtr

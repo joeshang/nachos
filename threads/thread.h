@@ -39,6 +39,7 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "list.h"
 
 #ifdef USER_PROGRAM
 #include "machine.h"
@@ -57,8 +58,7 @@
 
 
 // Thread state
-enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
-
+enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, ZOMBIE }; 
 // external function, dummy routine whose sole job is to call Thread::Print
 extern void ThreadPrint(int arg);	 
 
@@ -82,29 +82,38 @@ class Thread {
 
   public:
 	Thread(char* threadName, int uid, int pid);	// initialize a thread
-    ~Thread(); 				// deallocate a Thread
-					// NOTE -- thread being deleted
-					// must not be running when delete 
-					// is called
+    ~Thread(); // deallocate a Thread
+    // NOTE -- thread being deleted must not be running when delete is called
 
     // basic thread operations
-
     void Fork(VoidFunctionPtr func, int arg); 	// Make thread run (*func)(arg)
-    void Yield();  				// Relinquish the CPU if any 
-						// other thread is runnable
-    void Sleep();  				// Put the thread to sleep and 
-						// relinquish the processor
-    void Finish();  				// The thread is done executing
-    
-    void CheckOverflow();   			// Check if thread has 
-						// overflowed its stack
+    void Yield();   // Relinquish the CPU if any other thread is runnable
+    void Sleep();   // Put the thread to sleep and relinquish the processor
+    void Finish();  // The thread is done executing
+    void CheckOverflow();  // Check if thread has overflowed its stack
+
+    // get property methods.
     void setStatus(ThreadStatus st) { status = st; }
 	ThreadStatus getStatus() { return (status); }
+
     char* getName() { return (name); }
 	int getUserID() { return (userID); }
 	int getThreadID() { return (threadID); }
+
 	int getPriority() { return (priority); }
 	void setPriority(int prior) { priority = prior; }
+
+    int getExitStatus() { return (exitStatus); }
+    void setExitStatus(int status) { exitStatus = status; }
+
+    Thread *getParent() { return (parent); }
+    void setParent(Thread *thread) { parent = thread; }
+    void addChild(Thread *thread);
+    void childThreadExit(int threadId);
+    Thread *removeExitedChild(int threadId);
+
+    void cleanUpBeforeDestroy();
+
     void Print() { printf("%s, ", name); }
 
   private:
@@ -118,6 +127,12 @@ class Thread {
 	int userID;
 	int threadID;
 	int priority;
+
+    Thread* parent;     // Parent thread.
+    List *activeChild;  // Active child thread list.
+    List *exitedChild;  // Exited child thread list.
+
+    int exitStatus;     // Thread's exit status.
 
     void StackAllocate(VoidFunctionPtr func, int arg);
     					// Allocate a stack for thread.
@@ -151,6 +166,9 @@ void ThreadRoot();
 
 // Stop running oldThread and start running newThread
 void SWITCH(Thread *oldThread, Thread *newThread);
+
+int threadIDComp(void *target, void *data);
+
 }
 
 #endif // THREAD_H

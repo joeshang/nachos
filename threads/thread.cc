@@ -24,6 +24,13 @@
 					// execution stack, for detecting 
 					// stack overflows
 
+int threadIDComp(void *target, void *data)
+{
+    int threadId = ((Thread *)target)->getThreadID();
+
+    return (threadId == (int)data);
+}
+
 //----------------------------------------------------------------------
 // Thread::Thread
 // 	Initialize a thread control block, so that we can then call
@@ -41,6 +48,11 @@ Thread::Thread(char* threadName, int uid, int pid)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
+
+    parent = currentThread;
+    activeChild = new List();
+    exitedChild = new List();
+
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
@@ -68,6 +80,9 @@ Thread::~Thread()
 	{
 		DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
 	}
+
+    delete activeChild;
+    delete exitedChild;
 
 #ifdef VM
 	memoryManager->deleteAddrSpace(threadID);
@@ -155,13 +170,28 @@ Thread::CheckOverflow()
 void
 Thread::Finish ()
 {
+    Thread *nextThread;
+
     (void) interrupt->SetLevel(IntOff);		
     ASSERT(this == currentThread);
     
     DEBUG('t', "Finishing thread \"%s\"\n", getName());
     
-    threadToBeDestroyed = currentThread;
-    Sleep();					// invokes SWITCH
+    // Set status to Zombie and add thread to parent thread's exit child list.
+    status = ZOMBIE;
+    if (parent != NULL)
+    {
+        parent->childThreadExit(threadID);
+    }
+    else
+    {
+        threadToBeDestroyed = currentThread;
+    }
+
+    while ((nextThread = scheduler->FindNextToRun()) == NULL)
+        interrupt->Idle();	// no one to run, wait for an interrupt
+
+    scheduler->Run(nextThread); // returns when we've been signalled
     // not reached
 }
 
@@ -240,8 +270,8 @@ Thread::Sleep ()
 
     status = BLOCKED;
     while ((nextThread = scheduler->FindNextToRun()) == NULL)
-	interrupt->Idle();	// no one to run, wait for an interrupt
-        
+        interrupt->Idle();	// no one to run, wait for an interrupt
+
     scheduler->Run(nextThread); // returns when we've been signalled
 }
 
@@ -302,6 +332,70 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
     machineState[InitialArgState] = arg;
     machineState[WhenDonePCState] = (int) ThreadFinish;
 }
+
+//----------------------------------------------------------------------
+// Thread::cleanUpBeforeDestory
+//  Add child thread into active child list.	
+//----------------------------------------------------------------------
+void Thread::cleanUpBeforeDestroy()
+{
+    Thread *child;
+
+    while ((child = (Thread *)activeChild->Remove()) != NULL)
+    {
+        child->cleanUpBeforeDestroy();
+        threadManager->deleteThread(child);
+    }
+
+    while ((child = (Thread *)exitedChild->Remove()) != NULL)
+    {
+        child->cleanUpBeforeDestroy();
+        threadManager->deleteThread(child);
+    }
+}
+
+//----------------------------------------------------------------------
+// Thread::addChild
+//  Add child thread into active child list.	
+//
+//  "thread" is the child thread structure.
+//----------------------------------------------------------------------
+void Thread::addChild(Thread *thread)
+{
+    if (thread != NULL)
+    {
+        activeChild->Append(thread);
+    }
+}
+
+//----------------------------------------------------------------------
+// Thread::childThreadExit
+//  Remove exited child thread from active child list and move into 
+//  exited child list.
+//
+//  "threadId" is the exited child thread ID.
+//----------------------------------------------------------------------
+void Thread::childThreadExit(int threadId)
+{
+    Thread *thread;
+    thread = (Thread *)activeChild->RemoveByComp(threadIDComp, (void *)threadId);
+    if (thread != NULL)
+    {
+        exitedChild->Append(thread);
+    }
+}
+
+//----------------------------------------------------------------------
+// Thread::removeExitedChild
+//  Remove exited child from exited child list.
+//
+//  "threadId" is the exited child thread ID.
+//----------------------------------------------------------------------
+Thread *Thread::removeExitedChild(int threadId)
+{
+    return (Thread *)exitedChild->RemoveByComp(threadIDComp, (void *)threadId);
+}
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"

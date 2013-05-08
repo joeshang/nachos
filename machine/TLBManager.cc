@@ -90,8 +90,11 @@ TLBManager::cacheOnePageEntry(unsigned int vpn)
 	if (tlbPageTable[target].valid)
 	{
 		AddrSpace* space = memoryManager->getAddrSpaceOfThread(relatedThreadId[target]);
-		TranslationEntry* pageTable = space->getPageTable();
-		pageTable[tlbPageTable[target].virtualPage] = tlbPageTable[target];
+        if (space != NULL)
+        {
+            TranslationEntry* pageTable = space->getPageTable();
+            pageTable[tlbPageTable[target].virtualPage] = tlbPageTable[target];
+        }
 	}
 
 	// 3. Cache the new page entry in TLB.

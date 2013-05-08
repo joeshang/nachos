@@ -78,12 +78,15 @@ List::Append(void *item)
 {
     ListElement *element = new ListElement(item, 0);
 
-    if (IsEmpty()) {		// list is empty
-	first = element;
-	last = element;
-    } else {			// else put it after last
-	last->next = element;
-	last = element;
+    if (IsEmpty()) // list is empty
+    {		
+        first = element;
+        last = element;
+    } 
+    else // else put it after last
+    {	
+        last->next = element;
+        last = element;
     }
 }
 
@@ -104,12 +107,15 @@ List::Prepend(void *item)
 {
     ListElement *element = new ListElement(item, 0);
 
-    if (IsEmpty()) {		// list is empty
-	first = element;
-	last = element;
-    } else {			// else put it before first
-	element->next = first;
-	first = element;
+    if (IsEmpty()) // list is empty
+    {		
+        first = element;
+        last = element;
+    } 
+    else // else put it before first
+    {			
+        element->next = first;
+        first = element;
     }
 }
 
@@ -140,7 +146,8 @@ List::Remove()
 void
 List::Mapcar(VoidFunctionPtr func)
 {
-    for (ListElement *ptr = first; ptr != NULL; ptr = ptr->next) {
+    for (ListElement *ptr = first; ptr != NULL; ptr = ptr->next) 
+    {
        DEBUG('l', "In mapcar, about to invoke %x(%x)\n", func, ptr->item);
        (*func)((int)ptr->item);
     }
@@ -155,9 +162,13 @@ bool
 List::IsEmpty() 
 { 
     if (first == NULL)
+    {
         return TRUE;
+    }
     else
-	return FALSE; 
+    {
+        return FALSE; 
+    }    
 }
 
 //----------------------------------------------------------------------
@@ -181,23 +192,31 @@ List::SortedInsert(void *item, int sortKey)
     ListElement *element = new ListElement(item, sortKey);
     ListElement *ptr;		// keep track
 
-    if (IsEmpty()) {	// if list is empty, put
+    if (IsEmpty()) // if list is empty, put 
+    {	
         first = element;
         last = element;
-    } else if (sortKey < first->key) {	
-		// item goes on front of list
-	element->next = first;
-	first = element;
-    } else {		// look for first elt in list bigger than item
-        for (ptr = first; ptr->next != NULL; ptr = ptr->next) {
-            if (sortKey < ptr->next->key) {
-		element->next = ptr->next;
-	        ptr->next = element;
-		return;
-	    }
-	}
-	last->next = element;		// item goes at end of list
-	last = element;
+    } 
+    else if (sortKey < first->key) // item goes on front of list
+    {	
+        element->next = first;
+        first = element;
+    }
+    else 
+    {		
+        // look for first elt in list bigger than item
+        for (ptr = first; ptr->next != NULL; ptr = ptr->next) 
+        {
+            if (sortKey < ptr->next->key) 
+            {
+                element->next = ptr->next;
+                ptr->next = element;
+                return;
+            }
+        }
+
+        last->next = element;		// item goes at end of list
+        last = element;
     }
 }
 
@@ -221,24 +240,34 @@ List::SortedRemove(int *keyPtr)
     void *thing;
 
     if (IsEmpty()) 
-	return NULL;
+    {
+        return NULL;
+    }
 
     thing = first->item;
-    if (first == last) {	// list had one item, now has none 
+    if (first == last) // list had one item, now has none 
+    {	
         first = NULL;
-	last = NULL;
-    } else {
+        last = NULL;
+    }
+    else 
+    {
         first = element->next;
     }
+
     if (keyPtr != NULL)
+    {
         *keyPtr = element->key;
+    }
+
     delete element;
+
     return thing;
 }
 
 //----------------------------------------------------------------------
-// List::RemoveBySortedKey
-//      Remove the "item" of a sorted list by the "sortedKey".
+// List::RemoveByComp
+//      Remove the "item" of a sorted list by user-defined compare function.
 // 
 // Returns:
 //	Pointer to removed item, NULL if can't find the target on the list.
@@ -246,7 +275,7 @@ List::SortedRemove(int *keyPtr)
 //----------------------------------------------------------------------
 
 void*
-List::RemoveBySortedKey(int sortedKey)
+List::RemoveByComp(CompFunctionPtr comp, void *data)
 {
 	ListElement* target = NULL;
 	ListElement* cursor = NULL;
@@ -259,7 +288,7 @@ List::RemoveBySortedKey(int sortedKey)
 
     for (ListElement *ptr = first; ptr != NULL; ptr = ptr->next)
 	{
-		if (ptr->key == sortedKey)
+		if (comp(ptr->item, data))
 		{
 			target = ptr;
 			thing = ptr->item;

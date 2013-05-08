@@ -3,6 +3,7 @@
 // Author: Joe Shang, 13/10/2012
 
 #include "threadmanager.h"
+#include "system.h"
 
 //----------------------------------------------------------------------
 // printThread
@@ -13,7 +14,7 @@
 static void printThread(int arg)
 {
 	Thread* thread = (Thread*)arg;
-	const char* status[4] = {"Created", "Running", "Ready", "Blocked"};
+	const char* status[5] = {"Created", "Running", "Ready", "Blocked", "Zombie"};
 
 	printf(" %8d | %10s | %6d | %s \n",
 			thread->getThreadID(),
@@ -30,7 +31,7 @@ static void printThread(int arg)
 ThreadManager::ThreadManager()
 {
 	threadCnt = 0;
-	threadList = new List;
+	threadList = new List();
 }
 
 //----------------------------------------------------------------------
@@ -40,7 +41,7 @@ ThreadManager::ThreadManager()
 
 ThreadManager::~ThreadManager()
 {
-	delete threadList;
+	delete [] threadList;
 }
 
 //----------------------------------------------------------------------
@@ -61,7 +62,12 @@ ThreadManager::createThread(char* debugName, int uid)
 		int pid = generateThreadID();
 		newThread = new Thread(debugName, uid, pid);
 
-		threadList->SortedInsert((void*)newThread, pid);
+        if (threadCnt > 1)
+        {
+            currentThread->addChild(newThread);
+        }
+
+		threadList->Append((void *)newThread);
 	}
 
 	return newThread;
@@ -87,7 +93,7 @@ ThreadManager::deleteThread(Thread* thread)
 		
 		int pid = thread->getThreadID();
 		threadIDMap[pid] = 0;
-		threadList->RemoveBySortedKey(pid);
+		threadList->RemoveByComp(threadIDComp, (void *)pid);
 
 		delete thread;
 	}

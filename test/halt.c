@@ -26,6 +26,9 @@ void test()
 int
 main()
 {
+    int child = 0;
+    int exitStatus;
+
 	Print("Enter main", sizeof("Enter main"));
 	Fork(test);
 
@@ -33,7 +36,9 @@ main()
 	Yield();
 
 	Print("Exec sort", sizeof("Exec sort"));
-	Exec("../test/sort");
+	child = Exec("../test/sort");
+
+    exitStatus = Join(child);
 
 	Print("Final in main and Halt\n", sizeof("Final in main and Halt\n"));
     Halt();

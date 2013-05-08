@@ -114,6 +114,10 @@ ExceptionHandler(ExceptionType which)
 	}
 }
 
+// A dummy handler function of user program's Fork/Exec. The main purpose of this
+// function is to run virtual machine in nachos(machine->Run()). Before do that,
+// Fork need to restore virtual machine's registers and Exec need to init virtual
+// machine's registers and pageTable.
 static void ThreadFuncForUserProg(int arg)
 {
     switch (arg)
@@ -148,16 +152,22 @@ static void SysCallExecHandler()
 	char fileName[100];
 	int arg = machine->ReadRegister(4);
 	int i = 0;
+
+    // Get the executable file name from user space.
 	do
 	{
 		machine->ReadMem(arg + i, 1, (int*)&fileName[i]);
 	}while(fileName[i++] != '\0');
 
+    // Open the executabel file.
 	OpenFile* executable = fileSystem->Open(fileName);
 	if (executable != NULL)	
 	{
+        // Set up a new thread and alloc address space for it.
 		Thread* thread = threadManager->createThread(fileName);
 		thread->space = memoryManager->createAddrSpace(thread->getThreadID(), executable);
+
+        // Return the new thread id.
 		machine->WriteRegister(2, thread->getThreadID());
 
 		DEBUG('a', "Exec from thread %d -> executable %s\n", 
@@ -166,6 +176,7 @@ static void SysCallExecHandler()
 	}
 	else
 	{
+        // Can't open executable file, so return -1.
 		machine->WriteRegister(2, -1);
 	}
 	
@@ -174,15 +185,51 @@ static void SysCallExecHandler()
 
 static void SysCallExitHandler()
 {
+    int exitStatus = machine->ReadRegister(4);
 	int threadId = currentThread->getThreadID();
-	memoryManager->deleteAddrSpace(threadId);
-	currentThread->Finish();
 
-	machine->PCForward();
+    // Delete thread' address space.
+	memoryManager->deleteAddrSpace(threadId);
+
+    // Set thread's exit status.
+    currentThread->setExitStatus(exitStatus);
+
+    // Wake up parent if parent is sleeping.
+    if (currentThread->getParent()->getStatus() == BLOCKED)
+    {
+        scheduler->ReadyToRun(currentThread->getParent());
+    }
+
+    // Thread finished.
+	currentThread->Finish();
 }
 
 static void SysCallJoinHandler()
 {
+    Thread *childThread;
+    int exitStatus = 0;
+    int childThreadId = machine->ReadRegister(4);
+    
+    // Check the waiting child thread whether in the exited child list or not.
+    childThread = currentThread->removeExitedChild(childThreadId);
+    while (childThread == NULL)
+    {
+        // If the child thread is not in the exited child list, current thread sleep.
+        currentThread->Sleep();
+        childThread = currentThread->removeExitedChild(childThreadId);
+    }
+
+    // Get child thread's exit status.
+    exitStatus = childThread->getExitStatus();
+
+    // Clean up resources of child thread and destroy it.
+    childThread->cleanUpBeforeDestroy();
+    threadManager->deleteThread(childThread);
+
+    // Return the child thread's exit status.
+    machine->WriteRegister(2, exitStatus);
+
+	machine->PCForward();
 }
 
 static void SysCallForkHandler()
